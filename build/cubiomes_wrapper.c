@@ -1,6 +1,20 @@
 /**
  * cubiomes_wrapper.c
  * Wrapper léger exposant cubiomes en WASM via Emscripten.
+ *
+ * Compilation (dans le dossier build/) :
+ *   emcc cubiomes_wrapper.c cubiomes/generator.c cubiomes/biomes.c \
+ *        cubiomes/layers.c cubiomes/noise.c cubiomes/util.c \
+ *        cubiomes/finders.c cubiomes/quadbase.c \
+ *        -o ../assets/js/cubiomes.js \
+ *        -s WASM=1 \
+ *        -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap"]' \
+ *        -s EXPORTED_FUNCTIONS='["_malloc","_free","_cw_init","_cw_free","_cw_set_seed","_cw_get_biome","_cw_get_biome_bulk","_cw_get_structures"]' \
+ *        -s ALLOW_MEMORY_GROWTH=1 \
+ *        -s INITIAL_MEMORY=67108864 \
+ *        -O2 \
+ *        -s MODULARIZE=1 \
+ *        -s EXPORT_NAME="CubiomesModule"
  */
 
 #include <stdlib.h>
@@ -9,9 +23,8 @@
 #include "cubiomes/generator.h"
 #include "cubiomes/finders.h"
 #include "cubiomes/util.h"
-#include "cubiomes/structures.h" // <-- ajouté pour StructureType
 
-/* ─── Mapping version string → constante cubiomes ─── */
+/* ─── Mapping version → constante cubiomes ─── */
 static int version_const(int v) {
     if (v >= 1214) return MC_1_21;
     if (v >= 1210) return MC_1_21;
@@ -25,10 +38,9 @@ static int version_const(int v) {
 /* ─── Opaque handle ─── */
 typedef struct {
     Generator g;
-    int       mc_version;
+    int mc_version;
 } CWGen;
 
-/* Initialise un générateur */
 CWGen* cw_init(int version_int, int large_biomes) {
     CWGen *cw = (CWGen*)malloc(sizeof(CWGen));
     if (!cw) return NULL;
@@ -37,24 +49,19 @@ CWGen* cw_init(int version_int, int large_biomes) {
     return cw;
 }
 
-void cw_free(CWGen *cw) {
-    if (cw) free(cw);
-}
+void cw_free(CWGen *cw) { if(cw) free(cw); }
 
-/* Applique la seed */
 void cw_set_seed(CWGen *cw, int seed_lo, int seed_hi) {
     if (!cw) return;
     uint64_t seed = ((uint64_t)(unsigned int)seed_hi << 32) | (unsigned int)seed_lo;
     applySeed(&cw->g, DIM_OVERWORLD, seed);
 }
 
-/* Retourne l'id biome au point (x, z) */
 int cw_get_biome(CWGen *cw, int x, int z, int scale) {
     if (!cw) return 0;
     return getBiomeAt(&cw->g, scale, x, 0, z);
 }
 
-/* Bloc de biomes */
 void cw_get_biome_bulk(CWGen *cw, int *out, int ox, int oz, int w, int h, int scale) {
     if (!cw || !out) return;
     Range r;
@@ -69,27 +76,17 @@ void cw_get_biome_bulk(CWGen *cw, int *out, int ox, int oz, int w, int h, int sc
 }
 
 /* ─── STRUCTURES ─── */
-
-/* Type de structure → enum cubiomes */
 static enum StructureType struct_type(int t) {
     switch(t) {
         case 0:  return Village;
         case 1:  return Fortress;
-#ifdef BastionRemnant
         case 2:  return BastionRemnant;
-#else
-        case 2:  return Village;
-#endif
         case 3:  return Monument;
         case 4:  return Mansion;
         case 5:  return Desert_Pyramid;
         case 6:  return Jungle_Pyramid;
         case 7:  return Swamp_Hut;
-#ifdef Stronghold
         case 8:  return Stronghold;
-#else
-        case 8:  return Fortress;
-#endif
         case 9:  return Mineshaft;
         case 10: return Ruined_Portal;
         case 11: return Outpost;
@@ -98,7 +95,6 @@ static enum StructureType struct_type(int t) {
     }
 }
 
-/* Cherche les positions de structures */
 int cw_get_structures(CWGen *cw, int *out_x, int *out_z,
                       int struct_type_id, int cx, int cz,
                       int radius, int max, int seed_lo, int seed_hi) {
