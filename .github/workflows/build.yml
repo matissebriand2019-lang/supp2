@@ -9,24 +9,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣ On récupère ton repo principal
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2️⃣ On clone Cubiomes dans build/cubiomes
       - name: Clone cubiomes
         run: git clone --depth=1 https://github.com/Cubitect/cubiomes build/cubiomes
 
+      # 3️⃣ On installe Emscripten
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: 3.1.56
 
+      # 4️⃣ On compile Cubiomes → WASM en allant dans le bon dossier
       - name: Compile cubiomes → WASM
-        run: cd build && bash build.sh
+        run: cd build/cubiomes && bash build.sh
 
+      # 5️⃣ On upload les artefacts générés
       - name: Upload artefacts
         uses: actions/upload-artifact@v4
         with:
           name: cubiomes-wasm
           path: |
-            build/cubiomes.js
-            build/cubiomes.wasm
+            build/cubiomes/cubiomes.js
+            build/cubiomes/cubiomes.wasm
