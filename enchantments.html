@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enchantements — MineGuide</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/common.css">
+<style>
+#page-content { overflow: hidden; display: flex; }
+
+/* ── INNER NAV ── */
+.ench-subnav {
+  width: 175px; flex-shrink: 0;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto; padding: 10px 0;
+}
+.esn-section { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--border2); padding: 8px 10px 3px; }
+.esn-item {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px; cursor: pointer; font-size: 11px; font-weight: 700;
+  color: var(--gray); transition: all 0.1s; border-left: 2px solid transparent;
+}
+.esn-item:hover { background: var(--bg3); color: var(--white); }
+.esn-item.active { background: rgba(157,86,255,0.07); border-left-color: var(--purple); color: var(--purple); }
+
+/* Search */
+.ench-search-wrap { padding: 8px; border-bottom: 1px solid var(--border); }
+.ench-search {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px; padding: 6px 9px; color: var(--white);
+  font-size: 11px; font-family: 'Nunito', sans-serif; outline: none;
+}
+.ench-search::placeholder { color: var(--border2); }
+.ench-search:focus { border-color: var(--purple); }
+
+/* Catégories filter */
+.cat-filters { display: flex; gap: 3px; padding: 6px 8px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.cat-btn {
+  padding: 3px 8px; border-radius: 10px; border: 1px solid transparent;
+  font-size: 9px; font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif;
+  color: var(--gray); background: none; transition: all 0.1s;
+}
+.cat-btn:hover { background: var(--bg3); }
+.cat-btn.active { background: rgba(157,86,255,0.12); border-color: rgba(157,86,255,0.3); color: var(--purple); }
+
+/* ── CONTENT ── */
+.ench-content { flex: 1; overflow-y: auto; padding: 20px 24px; min-width: 0; }
+
+/* Header */
+.ench-header { margin-bottom: 20px; }
+.ench-header h1 { font-family: 'VT323', monospace; font-size: 32px; color: var(--purple); text-shadow: 0 0 20px rgba(157,86,255,0.3); letter-spacing: 1px; line-height: 1; margin-bottom: 4px; }
+.ench-header p { color: var(--gray); font-size: 11px; }
+
+/* Légende tiers */
+.tier-legend { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.tier-tag {
+  padding: 3px 9px; border-radius: 3px; font-size: 9px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.tier-must    { background: rgba(157,86,255,0.12); border: 1px solid rgba(157,86,255,0.3); color: var(--purple); }
+.tier-rec     { background: rgba(78,201,126,0.1);  border: 1px solid rgba(78,201,126,0.3); color: var(--green); }
+.tier-opt     { background: rgba(255,255,255,0.05);border: 1px solid var(--border);        color: var(--gray); }
+
+/* Item card */
+.ench-item {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+  margin-bottom: 10px; overflow: hidden; scroll-margin-top: 20px;
+  transition: border-color 0.12s;
+}
+.ench-item.hidden { display: none; }
+.ench-item:hover { border-color: var(--border2); }
+
+.ench-item-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; cursor: pointer; user-select: none;
+}
+.ench-item-icon { font-size: 22px; flex-shrink: 0; }
+.ench-item-name { font-size: 14px; font-weight: 800; color: var(--white); flex: 1; }
+.ench-item-meta { display: flex; align-items: center; gap: 6px; }
+.ench-cost { font-family: 'VT323', monospace; font-size: 17px; color: var(--gold); }
+.ench-cost-label { font-size: 9px; color: var(--gray); }
+.ench-chevron { color: var(--border2); font-size: 11px; transition: transform 0.15s; }
+.ench-item.open .ench-chevron { transform: rotate(180deg); }
+
+.ench-item-body { display: none; padding: 0 14px 14px; }
+.ench-item.open .ench-item-body { display: block; }
+
+/* Variantes */
+.variants-row { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+.var-btn {
+  padding: 5px 11px; border-radius: 4px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--gray); font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.1s;
+}
+.var-btn:hover { border-color: var(--border2); color: var(--white); }
+.var-btn.active { background: rgba(157,86,255,0.12); border-color: rgba(157,86,255,0.4); color: var(--purple); }
+
+/* Liste enchantements */
+.ench-list { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
+.ench-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+}
+.ench-row-name { flex: 1; font-size: 12px; font-weight: 700; color: var(--white); }
+.ench-row-note { font-size: 10px; color: var(--gray); }
+
+/* Ordre d'enchantement */
+.anvil-section { margin-top: 8px; }
+.anvil-title { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--border2); margin-bottom: 8px; }
+.anvil-steps { display: flex; flex-direction: column; gap: 5px; }
+.anvil-step {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+}
+.anvil-num {
+  width: 20px; height: 20px; border-radius: 50%; background: rgba(157,86,255,0.15);
+  border: 1px solid rgba(157,86,255,0.3); color: var(--purple); font-size: 11px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.anvil-desc { flex: 1; font-size: 11px; color: var(--gray2); }
+.anvil-desc strong { color: var(--white); font-weight: 700; }
+.anvil-cost { font-family: 'VT323', monospace; font-size: 15px; color: var(--green); white-space: nowrap; }
+
+/* Note / avertissement */
+.ench-note {
+  background: rgba(77,143,255,0.06); border: 1px solid rgba(77,143,255,0.2);
+  border-radius: 4px; padding: 7px 10px; font-size: 11px; color: #9ab8ff;
+  margin-top: 8px; line-height: 1.5;
+}
+.ench-warn {
+  background: rgba(255,140,66,0.07); border: 1px solid rgba(255,140,66,0.25);
+  border-radius: 4px; padding: 7px 10px; font-size: 11px; color: var(--orange);
+  margin-top: 8px; line-height: 1.5;
+}
+
+/* Lang toggle */
+.lang-btn {
+  padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--gray); font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.1s;
+}
+.lang-btn:hover { border-color: var(--border2); color: var(--white); }
+.lang-btn.active { background: rgba(157,86,255,0.12); border-color: rgba(157,86,255,0.4); color: var(--purple); }
+</style>
+</head>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="app">
+<div id="page-content">
+
+<div class="ench-subnav" id="enchSubnav">
+  <div class="ench-search-wrap">
+    <input class="ench-search" id="enchSearch" placeholder="Rechercher…" oninput="filterEnch()"/>
+  </div>
+  <div class="cat-filters">
+    <button class="cat-btn active" data-cat="all"   onclick="setCat('all',this)">Tout</button>
+    <button class="cat-btn"        data-cat="weapon" onclick="setCat('weapon',this)">Armes</button>
+    <button class="cat-btn"        data-cat="armor"  onclick="setCat('armor',this)">Armure</button>
+    <button class="cat-btn"        data-cat="tool"   onclick="setCat('tool',this)">Outils</button>
+  </div>
+  <div id="enchNavItems"></div>
+</div>
+
+<div class="ench-content" id="enchContent">
+  <div class="ench-header">
+    <h1>✨ Enchantements</h1>
+    <p id="enchSubtitle">Ordre optimal — Java 1.16–1.21.4</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:16px">
+    <button class="lang-btn active" id="btnFR" onclick="setLang('fr')">🇫🇷 Français</button>
+    <button class="lang-btn"        id="btnEN" onclick="setLang('en')">🇬🇧 English</button>
+  </div>
+  <div class="tier-legend">
+    <span class="tier-tag tier-must" id="tier-must-lbl">Indispensable</span>
+    <span class="tier-tag tier-rec"  id="tier-rec-lbl">Conseillé</span>
+    <span class="tier-tag tier-opt"  id="tier-opt-lbl">Optionnel</span>
+  </div>
+  <div id="enchItems"></div>
+</div>
+
+</div>
+<footer id="footer"></footer>
+</div>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+"use strict";
+
+/* ──────────────────────────────────────────────────────────────
+   DONNÉES — Noms en français Minecraft officiel
+   Source: wiki.gg/wiki/Enchanting + expériences en jeu
+   ────────────────────────────────────────────────────────────── */
+const ITEMS = [
+
+  // ╔══════════════ ARMES ══════════════╗
+
+  { id:'sword', name:'Épée', icon:'⚔️', cat:'weapon', variants:[
+    { label:'Tranchant V — Général', default:true,
+      enchs:[
+        {name:'Tranchant V',          tier:'must'},
+        {name:'Pillage III',          tier:'must'},
+        {name:'Taillant III',         tier:'must', note:'Java uniquement'},
+        {name:'Aspect de Feu II',     tier:'rec'},
+        {name:'Recul II',             tier:'opt'},
+        {name:'Raccommodage',         tier:'must'},
+        {name:'Solidité III',         tier:'rec'},
+      ],
+      steps:[
+        {desc:'Épée + <strong>Pillage III</strong>', cost:6},
+        {desc:'<strong>Taillant III</strong> + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat [1] + Résultat [2]', cost:11},
+        {desc:'<strong>Tranchant V</strong> + <strong>Recul II</strong>', cost:2},
+        {desc:'Résultat [3] + Résultat [4]', cost:11},
+        {desc:'<strong>Aspect de Feu II</strong> + <strong>Raccommodage</strong>', cost:2},
+        {desc:'Résultat [5] + Résultat [6]', cost:14},
+      ],
+      totalCost:49,
+      note:'Taillant III très utile dans les fermes XP mob.',
+    },
+    { label:'Châtiment V — Non-morts',
+      enchs:[
+        {name:'Châtiment V',          tier:'must'},
+        {name:'Pillage III',          tier:'must'},
+        {name:'Taillant III',         tier:'rec', note:'Java uniquement'},
+        {name:'Aspect de Feu II',     tier:'opt'},
+        {name:'Raccommodage',         tier:'must'},
+        {name:'Solidité III',         tier:'rec'},
+      ],
+      steps:[
+        {desc:'<strong>Châtiment V</strong> + <strong>Aspect de Feu II</strong>', cost:3},
+        {desc:'<strong>Pillage III</strong> + <strong>Taillant III</strong>', cost:5},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'Résultat [3] + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat [4] + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:22,
+      note:'Optimal contre Wither, Wither Skeleton, Zombies.',
+    },
+    { label:'Fléau des Arthropodes V',
+      enchs:[
+        {name:'Fléau des Arthropodes V', tier:'must'},
+        {name:'Pillage III',             tier:'must'},
+        {name:'Raccommodage',            tier:'must'},
+        {name:'Solidité III',            tier:'rec'},
+      ],
+      steps:[
+        {desc:'<strong>Fléau des Arthropodes V</strong> + <strong>Pillage III</strong>', cost:6},
+        {desc:'Résultat + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:11,
+      note:'1-shot toutes les araignées et endermites.',
+    },
+  ]},
+
+  { id:'axe_weapon', name:'Hache de Combat', icon:'🪓', cat:'weapon', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Tranchant V',    tier:'must'},
+        {name:'Efficacité V',   tier:'must'},
+        {name:'Raccommodage',   tier:'must'},
+        {name:'Solidité III',   tier:'rec'},
+      ],
+      steps:[
+        {desc:'<strong>Tranchant V</strong> + <strong>Efficacité V</strong>', cost:9},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+        {desc:'Résultat + <strong>Solidité III</strong>', cost:1},
+      ],
+      totalCost:12,
+      note:'La hache neutralise les boucliers ennemis 5× plus longtemps que l\'épée.',
+    },
+  ]},
+
+  { id:'mace', name:'Masse', icon:'🏏', cat:'weapon', variants:[
+    { label:'Standard (1.21+)', default:true,
+      enchs:[
+        {name:'Densité V',          tier:'must'},
+        {name:'Rafale de Vent III', tier:'must'},
+        {name:'Aspect de Feu II',   tier:'rec'},
+        {name:'Raccommodage',       tier:'must'},
+        {name:'Solidité III',       tier:'rec'},
+      ],
+      steps:[
+        {desc:'<strong>Densité V</strong> + <strong>Rafale de Vent III</strong>', cost:6},
+        {desc:'Résultat + <strong>Aspect de Feu II</strong>', cost:4},
+        {desc:'Résultat + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:15,
+    },
+    { label:'Brèche (PvP)',
+      enchs:[
+        {name:'Brèche IV',          tier:'must'},
+        {name:'Rafale de Vent III', tier:'must'},
+        {name:'Raccommodage',       tier:'must'},
+        {name:'Solidité III',       tier:'rec'},
+      ],
+      steps:[
+        {desc:'<strong>Brèche IV</strong> + <strong>Rafale de Vent III</strong>', cost:5},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+        {desc:'Résultat + <strong>Solidité III</strong>', cost:1},
+      ],
+      totalCost:8,
+    },
+  ]},
+
+  { id:'bow', name:'Arc', icon:'🏹', cat:'weapon', variants:[
+    { label:'Infini (exploration)', default:true,
+      enchs:[
+        {name:'Puissance V',    tier:'must'},
+        {name:'Infini',         tier:'must'},
+        {name:'Flamme',         tier:'must'},
+        {name:'Solidité III',   tier:'rec'},
+        {name:'Percée II',      tier:'opt'},
+      ],
+      steps:[
+        {desc:'Arc + <strong>Puissance V</strong>', cost:5},
+        {desc:'<strong>Infini</strong> + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'<strong>Percée II</strong> + <strong>Flamme</strong>', cost:2},
+        {desc:'Résultat [3] + Résultat [4]', cost:10},
+      ],
+      totalCost:29,
+      warn:'Infini et Raccommodage sont mutuellement exclusifs.',
+    },
+    { label:'Raccommodage (ferme XP)',
+      enchs:[
+        {name:'Puissance V',    tier:'must'},
+        {name:'Raccommodage',   tier:'must'},
+        {name:'Flamme',         tier:'must'},
+        {name:'Solidité III',   tier:'rec'},
+        {name:'Percée II',      tier:'opt'},
+      ],
+      steps:[
+        {desc:'Arc + <strong>Puissance V</strong>', cost:5},
+        {desc:'<strong>Raccommodage</strong> + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'<strong>Percée II</strong> + <strong>Flamme</strong>', cost:2},
+        {desc:'Résultat [3] + Résultat [4]', cost:10},
+      ],
+      totalCost:29,
+      note:'Préférable si vous utilisez des flèches ensorcelées (flèches de Lenteur de strays, etc.).',
+    },
+  ]},
+
+  { id:'crossbow', name:'Arbalète', icon:'🎯', cat:'weapon', variants:[
+    { label:'Multitir', default:true,
+      enchs:[
+        {name:'Rechargement Rapide III', tier:'must'},
+        {name:'Multitir',                tier:'must'},
+        {name:'Raccommodage',            tier:'must'},
+        {name:'Solidité III',            tier:'rec'},
+      ],
+      steps:[
+        {desc:'<strong>Multitir</strong> + <strong>Rechargement Rapide III</strong>', cost:5},
+        {desc:'Résultat + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:10,
+      note:'Rechargement Rapide III doit s\'obtenir via livre enchanté — max II à la table.',
+      warn:'Multitir et Perforant IV sont mutuellement exclusifs.',
+    },
+    { label:'Perforant IV',
+      enchs:[
+        {name:'Rechargement Rapide III', tier:'must'},
+        {name:'Perforant IV',            tier:'must'},
+        {name:'Raccommodage',            tier:'must'},
+        {name:'Solidité III',            tier:'rec'},
+      ],
+      steps:[
+        {desc:'<strong>Perforant IV</strong> + <strong>Rechargement Rapide III</strong>', cost:5},
+        {desc:'Résultat + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:10,
+      note:'Récupère les flèches après impact — idéal avec des flèches ensorcelées.',
+    },
+  ]},
+
+  { id:'trident', name:'Trident', icon:'🔱', cat:'weapon', variants:[
+    { label:'Corps à Corps', default:true,
+      enchs:[
+        {name:'Fidélité III',     tier:'must'},
+        {name:'Canalisation',     tier:'rec', note:'Lors des orages'},
+        {name:'Transperceur V',   tier:'rec'},
+        {name:'Raccommodage',     tier:'must'},
+        {name:'Solidité III',     tier:'rec'},
+      ],
+      steps:[
+        {desc:'<strong>Fidélité III</strong> + <strong>Canalisation</strong>', cost:8},
+        {desc:'Résultat + <strong>Transperceur V</strong>', cost:4},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+        {desc:'Résultat + <strong>Solidité III</strong>', cost:1},
+      ],
+      totalCost:15,
+      warn:'Fidélité et Raz-de-marée sont mutuellement exclusifs.',
+    },
+    { label:'Raz-de-marée (transport)',
+      enchs:[
+        {name:'Raz-de-marée III', tier:'must'},
+        {name:'Raccommodage',     tier:'must'},
+        {name:'Solidité III',     tier:'rec'},
+      ],
+      steps:[
+        {desc:'<strong>Raz-de-marée III</strong> + <strong>Solidité III</strong>', cost:5},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:7,
+      note:'Alternative aux fusées d\'élytre quand il pleut ou sous l\'eau.',
+    },
+  ]},
+
+  // ╔══════════════ ARMURE ══════════════╗
+
+  { id:'helmet', name:'Casque', icon:'⛑️', cat:'armor', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Protection IV',         tier:'must'},
+        {name:'Respiration III',        tier:'must'},
+        {name:'Affinité Aquatique',     tier:'rec'},
+        {name:'Raccommodage',           tier:'must'},
+        {name:'Solidité III',           tier:'rec'},
+        {name:'Épines III',             tier:'opt'},
+      ],
+      steps:[
+        {desc:'Casque + <strong>Respiration III</strong>', cost:6},
+        {desc:'<strong>Protection IV</strong> + <strong>Affinité Aquatique</strong>', cost:2},
+        {desc:'Résultat [1] + Résultat [2]', cost:8},
+        {desc:'<strong>Solidité III</strong> + <strong>Raccommodage</strong>', cost:2},
+        {desc:'Résultat [3] + Résultat [4]', cost:9},
+      ],
+      totalCost:27,
+      note:'Coût total optimal: 6+2+2+8+9 = 27 niveaux.',
+    },
+  ]},
+
+  { id:'chestplate', name:'Plastron', icon:'🛡️', cat:'armor', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Protection IV', tier:'must'},
+        {name:'Raccommodage',  tier:'must'},
+        {name:'Solidité III',  tier:'rec'},
+        {name:'Épines III',    tier:'opt'},
+      ],
+      steps:[
+        {desc:'Plastron + <strong>Protection IV</strong>', cost:4},
+        {desc:'<strong>Solidité III</strong> + <strong>Raccommodage</strong>', cost:2},
+        {desc:'Résultat [1] + Résultat [2]', cost:7},
+      ],
+      totalCost:13,
+    },
+  ]},
+
+  { id:'leggings', name:'Jambières', icon:'👖', cat:'armor', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Protection IV',      tier:'must'},
+        {name:'Furtivité Rapide III', tier:'rec', note:'1.19+'},
+        {name:'Raccommodage',       tier:'must'},
+        {name:'Solidité III',       tier:'rec'},
+        {name:'Épines III',         tier:'opt'},
+      ],
+      steps:[
+        {desc:'Jambières + <strong>Protection IV</strong>', cost:4},
+        {desc:'<strong>Solidité III</strong> + <strong>Raccommodage</strong>', cost:2},
+        {desc:'Résultat [1] + Résultat [2]', cost:7},
+        {desc:'Résultat + <strong>Furtivité Rapide III</strong>', cost:5},
+      ],
+      totalCost:18,
+    },
+  ]},
+
+  { id:'boots', name:'Bottes', icon:'👢', cat:'armor', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Protection IV',            tier:'must'},
+        {name:'Chute Amortie IV',         tier:'must'},
+        {name:'Marcheur des Profondeurs III', tier:'must'},
+        {name:'Raccommodage',             tier:'must'},
+        {name:'Solidité III',             tier:'rec'},
+        {name:'Vitesse des Âmes III',     tier:'opt'},
+        {name:'Épines III',               tier:'opt'},
+      ],
+      steps:[
+        {desc:'Bottes + <strong>Marcheur des Profondeurs III</strong>', cost:6},
+        {desc:'<strong>Protection IV</strong> + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'<strong>Chute Amortie IV</strong> + <strong>Raccommodage</strong>', cost:2},
+        {desc:'Résultat [3] + Résultat [4]', cost:10},
+      ],
+      totalCost:30,
+      note:'Coût total: 6+3+2+9+10 = 30 niveaux.',
+      warn:'Marcheur de Givre et Marcheur des Profondeurs sont mutuellement exclusifs.',
+    },
+  ]},
+
+  // ╔══════════════ OUTILS ══════════════╗
+
+  { id:'pickaxe', name:'Pioche', icon:'⛏️', cat:'tool', variants:[
+    { label:'Fortune III', default:true,
+      enchs:[
+        {name:'Efficacité V',  tier:'must'},
+        {name:'Fortune III',   tier:'must'},
+        {name:'Raccommodage',  tier:'must'},
+        {name:'Solidité III',  tier:'rec'},
+      ],
+      steps:[
+        {desc:'Pioche + <strong>Efficacité V</strong>', cost:5},
+        {desc:'<strong>Fortune III</strong> + <strong>Solidité III</strong>', cost:4},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:20,
+      note:'Fortune III prioritaire pour miner les minerais (diamants, émeraudes…).',
+      warn:'Fortune et Toucher de Soie sont mutuellement exclusifs.',
+    },
+    { label:'Toucher de Soie',
+      enchs:[
+        {name:'Efficacité V',    tier:'must'},
+        {name:'Toucher de Soie', tier:'must'},
+        {name:'Raccommodage',    tier:'must'},
+        {name:'Solidité III',    tier:'rec'},
+      ],
+      steps:[
+        {desc:'Pioche + <strong>Efficacité V</strong>', cost:5},
+        {desc:'<strong>Toucher de Soie</strong> + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:19,
+      note:'Indispensable pour: Coffre de l\'Ender, nids d\'abeilles, pierre lisse, verre.',
+    },
+  ]},
+
+  { id:'shovel', name:'Pelle', icon:'🪛', cat:'tool', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Efficacité V',  tier:'must'},
+        {name:'Toucher de Soie', tier:'rec'},
+        {name:'Raccommodage',  tier:'must'},
+        {name:'Solidité III',  tier:'rec'},
+      ],
+      steps:[
+        {desc:'Pelle + <strong>Efficacité V</strong>', cost:5},
+        {desc:'<strong>Toucher de Soie</strong> + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:19,
+      note:'Toucher de Soie utile pour herbe, gravier (silex × fortune), neige.',
+    },
+  ]},
+
+  { id:'hoe', name:'Houe', icon:'🌾', cat:'tool', variants:[
+    { label:'Fortune (feuilles/récoltes)', default:true,
+      enchs:[
+        {name:'Efficacité V',  tier:'must'},
+        {name:'Fortune III',   tier:'must'},
+        {name:'Raccommodage',  tier:'must'},
+        {name:'Solidité III',  tier:'rec'},
+      ],
+      steps:[
+        {desc:'Houe + <strong>Efficacité V</strong>', cost:5},
+        {desc:'<strong>Fortune III</strong> + <strong>Solidité III</strong>', cost:4},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:20,
+      note:'Fortune → plus de pommes, graines, pommes de terre, carottes depuis feuilles.',
+    },
+    { label:'Toucher de Soie (Sculk)',
+      enchs:[
+        {name:'Efficacité V',    tier:'must'},
+        {name:'Toucher de Soie', tier:'must'},
+        {name:'Raccommodage',    tier:'must'},
+        {name:'Solidité III',    tier:'rec'},
+      ],
+      steps:[
+        {desc:'Houe + <strong>Efficacité V</strong>', cost:5},
+        {desc:'<strong>Toucher de Soie</strong> + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:19,
+      note:'Requis pour collecter les blocs Sculk (Gardien Ancien).',
+    },
+  ]},
+
+  { id:'axe_tool', name:'Hache (Outil)', icon:'🪓', cat:'tool', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Efficacité V',    tier:'must'},
+        {name:'Toucher de Soie', tier:'rec'},
+        {name:'Raccommodage',    tier:'must'},
+        {name:'Solidité III',    tier:'rec'},
+      ],
+      steps:[
+        {desc:'Hache + <strong>Efficacité V</strong>', cost:5},
+        {desc:'<strong>Toucher de Soie</strong> + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:19,
+      note:'Toucher de Soie: melons, librairies, nids d\'abeilles, blocs champignons.',
+    },
+  ]},
+
+  { id:'fishing_rod', name:'Canne à Pêche', icon:'🎣', cat:'tool', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Chance de la Mer III', tier:'must'},
+        {name:'Appât III',            tier:'must'},
+        {name:'Raccommodage',         tier:'must'},
+        {name:'Solidité III',         tier:'rec'},
+      ],
+      steps:[
+        {desc:'Canne + <strong>Chance de la Mer III</strong>', cost:6},
+        {desc:'<strong>Appât III</strong> + <strong>Solidité III</strong>', cost:4},
+        {desc:'Résultat [1] + Résultat [2]', cost:9},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:21,
+      note:'Excellent pour obtenir des livres enchantés et de l\'équipement tôt en jeu.',
+    },
+  ]},
+
+  { id:'elytra', name:'Élytre', icon:'🦋', cat:'tool', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Raccommodage',  tier:'must'},
+        {name:'Solidité III',  tier:'must'},
+      ],
+      steps:[
+        {desc:'Élytre + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:5,
+      note:'Solidité quadruple la durabilité de l\'élytre. Raccommodage = seule façon de réparer sans mémbranes de fantôme.',
+    },
+  ]},
+
+  { id:'shield', name:'Bouclier', icon:'🛡', cat:'tool', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Raccommodage',  tier:'must'},
+        {name:'Solidité III',  tier:'must'},
+      ],
+      steps:[
+        {desc:'Bouclier + <strong>Solidité III</strong>', cost:3},
+        {desc:'Résultat + <strong>Raccommodage</strong>', cost:2},
+      ],
+      totalCost:5,
+    },
+  ]},
+
+  { id:'cisailles', name:'Cisailles', icon:'✂️', cat:'tool', variants:[
+    { label:'Standard', default:true,
+      enchs:[
+        {name:'Efficacité V',  tier:'must'},
+        {name:'Raccommodage',  tier:'must'},
+        {name:'Solidité III',  tier:'rec'},
+      ],
+      steps:[
+        {desc:'Cisailles + <strong>Efficacité V</strong>', cost:5},
+        {desc:'<strong>Solidité III</strong> + <strong>Raccommodage</strong>', cost:2},
+        {desc:'Résultat [1] + Résultat [2]', cost:6},
+      ],
+      totalCost:13,
+    },
+  ]},
+
+];
+
+/* ──────────────────────────────────────────────────────────────
+   TRADUCTIONS FR → EN (noms Minecraft officiels EN)
+   ────────────────────────────────────────────────────────────── */
+const EN_ENCH = {
+  // Combat
+  'Tranchant V':'Sharpness V','Tranchant IV':'Sharpness IV','Tranchant III':'Sharpness III',
+  'Châtiment V':'Smite V','Châtiment IV':'Smite IV',
+  'Fléau des Arthropodes V':'Bane of Arthropods V',
+  'Pillage III':'Looting III','Pillage II':'Looting II',
+  'Taillant III':'Sweeping Edge III','Taillant II':'Sweeping Edge II',
+  'Aspect de Feu II':'Fire Aspect II','Aspect de Feu I':'Fire Aspect I',
+  'Recul II':'Knockback II','Recul I':'Knockback I',
+  // Masse
+  'Densité V':'Density V','Brèche IV':'Breach IV',
+  'Rafale de Vent III':'Wind Burst III',
+  // Arc
+  'Puissance V':'Power V','Puissance IV':'Power IV',
+  'Flamme':'Flame',
+  'Percée II':'Punch II','Percée I':'Punch I',
+  'Infini':'Infinity',
+  // Arbalète
+  'Rechargement Rapide III':'Quick Charge III','Rechargement Rapide II':'Quick Charge II',
+  'Multitir':'Multishot',
+  'Perforant IV':'Piercing IV',
+  // Trident
+  'Fidélité III':'Loyalty III','Fidélité II':'Loyalty II',
+  'Canalisation':'Channeling',
+  'Raz-de-marée III':'Riptide III',
+  'Transperceur V':'Impaling V',
+  // Armure
+  'Protection IV':'Protection IV','Protection III':'Protection III',
+  'Respiration III':'Respiration III',
+  'Affinité Aquatique':'Aqua Affinity',
+  'Chute Amortie IV':'Feather Falling IV',
+  'Marcheur des Profondeurs III':'Depth Strider III',
+  'Marcheur de Givre II':'Frost Walker II',
+  'Vitesse des Âmes III':'Soul Speed III',
+  'Furtivité Rapide III':'Swift Sneak III',
+  'Épines III':'Thorns III',
+  // Outils
+  'Efficacité V':'Efficiency V',
+  'Fortune III':'Fortune III','Fortune II':'Fortune II',
+  'Toucher de Soie':'Silk Touch',
+  'Chance de la Mer III':'Luck of the Sea III',
+  'Appât III':'Lure III',
+  // Commun
+  'Raccommodage':'Mending',
+  'Solidité III':'Unbreaking III','Solidité II':'Unbreaking II',
+};
+
+const EN_ITEM_NAME = {
+  'Épée':'Sword','Hache de Combat':'Combat Axe','Masse':'Mace',
+  'Arc':'Bow','Arbalète':'Crossbow','Trident':'Trident',
+  'Casque':'Helmet','Plastron':'Chestplate','Jambières':'Leggings','Bottes':'Boots',
+  'Pioche':'Pickaxe','Pelle':'Shovel','Houe':'Hoe',
+  'Hache (Outil)':'Axe (Tool)','Canne à Pêche':'Fishing Rod',
+  'Élytre':'Elytra','Bouclier':'Shield','Cisailles':'Shears',
+};
+
+let currentLang = 'fr';
+const variantState = {};
+
+function translateEnch(n) { return currentLang==='en' ? (EN_ENCH[n]||n) : n; }
+function translateItem(n) { return currentLang==='en' ? (EN_ITEM_NAME[n]||n) : n; }
+function t(fr,en)         { return currentLang==='en' ? en : fr; }
+
+/* ────── LANG TOGGLE ────── */
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('btnFR').classList.toggle('active', lang === 'fr');
+  document.getElementById('btnEN').classList.toggle('active', lang === 'en');
+  renderItems(); // re-render only enchantment names
+}
+
+function renderAll()  { renderNavItems(); renderItems(); }
+function renderItems(){ document.getElementById('enchItems').innerHTML = ITEMS.map(renderItem).join(''); }
+
+function renderNavItems() {
+  const cats = [{id:'weapon',label:t('Armes','Weapons'),icon:'⚔️'},{id:'armor',label:t('Armure','Armor'),icon:'🛡️'},{id:'tool',label:t('Outils','Tools'),icon:'⛏️'}];
+  document.getElementById('enchNavItems').innerHTML = cats.map(cat => {
+    const items = ITEMS.filter(i => i.cat===cat.id);
+    return `<div class="esn-section">${cat.icon} ${cat.label}</div>` +
+      items.map(item => `<div class="esn-item" id="nav-${item.id}" onclick="scrollToItem('${item.id}')">${item.icon} ${item.name}</div>`).join('');
+  }).join('');
+}
+
+function renderItem(item) {
+  const varIdx = variantState[item.id] || 0;
+  const v = item.variants[varIdx];
+
+  const varBtns = item.variants.length > 1
+    ? `<div class="variants-row">${item.variants.map((va,i) =>
+        `<button class="var-btn ${i===varIdx?'active':''}" onclick="setVariant('${item.id}',${i},event)">${va.label}</button>`
+      ).join('')}</div>` : '';
+
+  const enchList = v.enchs.map(e => {
+    const tierClass = e.tier==='must'?'tier-must':e.tier==='rec'?'tier-rec':'tier-opt';
+    const tierLabel = e.tier==='must'?t('Indispensable','Essential'):e.tier==='rec'?t('Conseillé','Recommended'):t('Optionnel','Optional');
+    return `<div class="ench-row">
+      <span class="tier-tag ${tierClass}">${tierLabel}</span>
+      <span class="ench-row-name">${translateEnch(e.name)}</span>
+      ${e.note?`<span class="ench-row-note">${e.note}</span>`:''}
+    </div>`;
+  }).join('');
+
+  const anvilTitle = t('Ordre d\'enchantement optimal','Optimal enchanting order');
+  const anvilSteps = v.steps.map((s,i) => {
+    const desc = currentLang==='en'
+      ? s.desc.replace(/Résultat/g,'Result').replace(/<strong>([^<]+)<\/strong>/g, (_,n) => `<strong>${EN_ENCH[n]||n}</strong>`)
+      : s.desc;
+    return `<div class="anvil-step"><div class="anvil-num">${i+1}</div><div class="anvil-desc">${desc}</div><div class="anvil-cost">${s.cost} niv.</div></div>`;
+  }).join('');
+
+  const note = v.note ? `<div class="ench-note">${v.note}</div>` : '';
+  const warn = v.warn ? `<div class="ench-warn">⚠️ ${v.warn}</div>` : '';
+
+  return `<div class="ench-item" id="item-${item.id}" data-cat="${item.cat}">
+    <div class="ench-item-header" onclick="toggleItem('${item.id}')">
+      <span class="ench-item-icon">${item.icon}</span>
+      <span class="ench-item-name">${item.name}</span>
+      <div class="ench-item-meta"><span class="ench-cost">${v.totalCost}</span><span class="ench-cost-label">niv.</span></div>
+      <span class="ench-chevron">▼</span>
+    </div>
+    <div class="ench-item-body">
+      ${varBtns}
+      <div class="ench-list">${enchList}</div>
+      ${note}${warn}
+      <div class="anvil-section">
+        <div class="anvil-title">${anvilTitle}</div>
+        <div class="anvil-steps">${anvilSteps}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleItem(id){ document.getElementById('item-'+id).classList.toggle('open'); }
+
+function setVariant(itemId,idx,e){
+  e.stopPropagation(); variantState[itemId]=idx;
+  const item=ITEMS.find(i=>i.id===itemId);
+  const el=document.getElementById('item-'+itemId);
+  const wasOpen=el.classList.contains('open');
+  el.outerHTML=renderItem(item);
+  const newEl=document.getElementById('item-'+itemId);
+  if(wasOpen)newEl.classList.add('open');
+}
+
+function scrollToItem(id){
+  const el=document.getElementById('item-'+id);if(!el)return;
+  if(!el.classList.contains('open'))el.classList.add('open');
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.esn-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('nav-'+id)?.classList.add('active');
+}
+
+function setCat(cat,btn){
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); filterEnch();
+}
+
+function filterEnch(){
+  const q=document.getElementById('enchSearch').value.toLowerCase();
+  ITEMS.forEach(item=>{
+    const el=document.getElementById('item-'+item.id);if(!el)return;
+    const btn=[...document.querySelectorAll('.cat-btn.active')][0];
+    const cat=btn?.dataset?.cat||'all';
+    const matchCat=cat==='all'||item.cat===cat;
+    const matchText=!q||item.name.toLowerCase().includes(q)||translateItem(item.name).toLowerCase().includes(q);
+    el.classList.toggle('hidden',!matchCat||!matchText);
+  });
+}
+
+function setupScrollSpy(){
+  const c=document.getElementById('enchContent');
+  c.addEventListener('scroll',()=>{
+    let cur='';
+    ITEMS.forEach(item=>{const el=document.getElementById('item-'+item.id);if(!el)return;if(el.getBoundingClientRect().top<120)cur=item.id;});
+    if(cur){document.querySelectorAll('.esn-item').forEach(n=>n.classList.remove('active'));document.getElementById('nav-'+cur)?.classList.add('active');}
+  });
+}
+
+function init(){ renderNavItems(); renderItems(); setupScrollSpy(); }
+init();
+</script>
+</body>
+</html>

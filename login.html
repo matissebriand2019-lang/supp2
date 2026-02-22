@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion — MineGuide</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/common.css">
+<style>
+#page-content { display:flex; align-items:center; justify-content:center; padding:32px 20px; min-height:calc(100vh - 42px); }
+.auth-container { width:100%; max-width:400px; }
+.auth-logo { text-align:center; margin-bottom:24px; }
+.auth-logo-icon { font-size:36px; display:block; margin-bottom:6px; }
+.auth-logo-title { font-family:'VT323',monospace; font-size:28px; color:var(--gold); text-shadow:0 0 16px rgba(240,192,64,0.3); }
+.auth-card { background:var(--bg2); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.auth-tabs { display:flex; border-bottom:1px solid var(--border); }
+.auth-tab { flex:1; padding:11px; text-align:center; font-size:12px; font-weight:700; color:var(--gray); cursor:pointer; border:none; background:none; font-family:'Nunito',sans-serif; transition:all .12s; border-bottom:2px solid transparent; }
+.auth-tab:hover { color:var(--white); background:var(--bg3); }
+.auth-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.auth-form { padding:20px; display:none; flex-direction:column; gap:12px; }
+.auth-form.active { display:flex; }
+.form-group { display:flex; flex-direction:column; gap:4px; }
+.input-wrap { position:relative; }
+.input-wrap .input { padding-left:34px; }
+.input-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:13px; pointer-events:none; }
+.toggle-pwd { position:absolute; right:9px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--gray); cursor:pointer; font-size:13px; padding:2px; }
+.btn-google { background:var(--bg3); border:1px solid var(--border2); color:var(--white); width:100%; justify-content:center; padding:9px; border-radius:var(--radius); font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:7px; transition:all .12s; font-family:'Nunito',sans-serif; }
+.btn-google:hover { background:var(--bg4); }
+.auth-sep { display:flex; align-items:center; gap:8px; color:var(--border2); font-size:10px; }
+.auth-sep::before,.auth-sep::after { content:''; flex:1; height:1px; background:var(--border); }
+.btn-submit { width:100%; justify-content:center; }
+.auth-error { background:rgba(255,82,82,0.08); border:1px solid rgba(255,82,82,0.25); border-radius:var(--radius); padding:8px 11px; font-size:11px; color:var(--red); display:none; }
+.auth-error.show { display:block; }
+.forgot-link { font-size:10px; color:var(--gray); text-decoration:none; text-align:right; }
+.forgot-link:hover { color:var(--white); }
+.demo-banner { background:rgba(240,192,64,0.07); border:1px solid rgba(240,192,64,0.2); border-radius:4px; padding:8px 11px; font-size:11px; color:#c8a830; line-height:1.5; display:none; }
+.pwd-bar { height:2px; background:var(--border); border-radius:1px; margin-top:3px; overflow:hidden; }
+.pwd-bar-fill { height:100%; border-radius:1px; transition:width .3s,background .3s; width:0; }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="app">
+<div id="page-content">
+<div class="auth-container">
+  <div class="auth-logo">
+    <span class="auth-logo-icon">&#9935;&#65039;</span>
+    <div class="auth-logo-title">MineGuide</div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Se connecter</button>
+      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Créer un compte</button>
+    </div>
+    <!-- LOGIN -->
+    <form class="auth-form active" id="form-login" onsubmit="handleLogin(event)">
+      <div id="demo-login" class="demo-banner"></div>
+      <button type="button" class="btn-google" onclick="handleGoogle()">G &nbsp; Continuer avec Google</button>
+      <div class="auth-sep">ou</div>
+      <div class="auth-error" id="err-login"></div>
+      <div class="form-group">
+        <label class="input-label">E-mail</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#9993;&#65039;</span>
+          <input class="input" id="l-email" type="email" placeholder="votre@email.com" required autocomplete="email" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="input-label">Mot de passe</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#128274;</span>
+          <input class="input" id="l-pwd" type="password" placeholder="••••••••" required autocomplete="current-password" />
+          <button type="button" class="toggle-pwd" onclick="togglePwd('l-pwd',this)">&#128065;</button>
+        </div>
+        <a href="#" class="forgot-link" onclick="handleReset(event)">Mot de passe oublié ?</a>
+      </div>
+      <button type="submit" class="btn btn-primary btn-submit" id="btn-login">Se connecter</button>
+    </form>
+    <!-- REGISTER -->
+    <form class="auth-form" id="form-register" onsubmit="handleRegister(event)">
+      <div id="demo-register" class="demo-banner"></div>
+      <button type="button" class="btn-google" onclick="handleGoogle()">G &nbsp; S'inscrire avec Google</button>
+      <div class="auth-sep">ou</div>
+      <div class="auth-error" id="err-register"></div>
+      <div class="form-group">
+        <label class="input-label">Pseudo</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#127918;</span>
+          <input class="input" id="r-name" type="text" placeholder="Votre pseudo" autocomplete="username" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="input-label">E-mail</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#9993;&#65039;</span>
+          <input class="input" id="r-email" type="email" placeholder="votre@email.com" required autocomplete="email" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="input-label">Mot de passe</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#128274;</span>
+          <input class="input" id="r-pwd" type="password" placeholder="••••••••" required autocomplete="new-password" oninput="checkPwd(this.value)" />
+          <button type="button" class="toggle-pwd" onclick="togglePwd('r-pwd',this)">&#128065;</button>
+        </div>
+        <div class="pwd-bar"><div class="pwd-bar-fill" id="pwd-fill"></div></div>
+      </div>
+      <div class="form-group">
+        <label class="input-label">Confirmer</label>
+        <div class="input-wrap">
+          <span class="input-icon">&#128274;</span>
+          <input class="input" id="r-confirm" type="password" placeholder="••••••••" required autocomplete="new-password" />
+          <button type="button" class="toggle-pwd" onclick="togglePwd('r-confirm',this)">&#128065;</button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-submit" id="btn-register">Créer mon compte</button>
+    </form>
+  </div>
+</div>
+</div>
+<footer id="footer"></footer>
+</div>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+var params = new URLSearchParams(location.search);
+if (params.get('tab')==='register') switchTab('register');
+
+window.addEventListener('load', function() {
+  if (window.Auth.IS_DEMO) {
+    var msg = '&#9888; Mode démo — comptes sauvegardés localement.';
+    document.getElementById('demo-login').style.display='block';
+    document.getElementById('demo-login').innerHTML=msg;
+    document.getElementById('demo-register').style.display='block';
+    document.getElementById('demo-register').innerHTML=msg;
+  }
+  window.Auth.onAuthChange(function(user) {
+    if (user) window.location.href = params.get('redirect') || 'index.html';
+  });
+});
+
+function switchTab(t) {
+  document.getElementById('tab-login').classList.toggle('active',t==='login');
+  document.getElementById('tab-register').classList.toggle('active',t==='register');
+  document.getElementById('form-login').classList.toggle('active',t==='login');
+  document.getElementById('form-register').classList.toggle('active',t==='register');
+  clearErrors();
+}
+function showErr(id,msg){var e=document.getElementById(id);e.textContent=msg;e.classList.add('show');}
+function clearErrors(){document.querySelectorAll('.auth-error').forEach(function(e){e.textContent='';e.classList.remove('show');});}
+function setLoading(id,v){var b=document.getElementById(id);b.disabled=v;b.textContent=v?'…':b.id==='btn-login'?'Se connecter':'Créer mon compte';}
+
+async function handleLogin(e){
+  e.preventDefault();clearErrors();setLoading('btn-login',true);
+  try{await window.Auth.signInWithEmail(document.getElementById('l-email').value,document.getElementById('l-pwd').value);}
+  catch(err){showErr('err-login',err.message);setLoading('btn-login',false);}
+}
+async function handleRegister(e){
+  e.preventDefault();clearErrors();
+  var pwd=document.getElementById('r-pwd').value,conf=document.getElementById('r-confirm').value;
+  if(pwd!==conf){showErr('err-register','Les mots de passe ne correspondent pas.');return;}
+  if(pwd.length<6){showErr('err-register','Minimum 6 caractères.');return;}
+  setLoading('btn-register',true);
+  try{await window.Auth.createAccount(document.getElementById('r-email').value,pwd,document.getElementById('r-name').value);}
+  catch(err){showErr('err-register',err.message);setLoading('btn-register',false);}
+}
+async function handleGoogle(){clearErrors();try{await window.Auth.signInWithGoogle();}catch(err){showErr('err-login',err.message);showErr('err-register',err.message);}}
+async function handleReset(e){
+  e.preventDefault();
+  var em=document.getElementById('l-email').value;
+  if(!em){showErr('err-login','Entrez votre e-mail.');return;}
+  try{await window.Auth.resetPassword(em);MineGuide.showToast('E-mail envoyé !','success');}
+  catch(err){showErr('err-login',err.message);}
+}
+function togglePwd(id,btn){var i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'&#128065;':'&#128584;';}
+function checkPwd(v){
+  var s=0;if(v.length>=6)s++;if(v.length>=10)s++;if(/[A-Z]/.test(v))s++;if(/[0-9]/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;
+  var f=document.getElementById('pwd-fill');
+  var cols=['','#ff5252','#ff8c42','#f0c040','#4ec97e','#4ec97e'];
+  f.style.width=(v?s*20+'%':'0');f.style.background=cols[s]||'';
+}
+</script>
+</body>
+</html>

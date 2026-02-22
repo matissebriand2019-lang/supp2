@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Couleur Balise — MineGuide</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/common.css">
+<style>
+#page-content { overflow: hidden; display: flex; }
+
+/* ── PANNEAU GAUCHE ── */
+.bc-left {
+  width: 300px; flex-shrink: 0;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow-y: auto;
+}
+.bc-left::-webkit-scrollbar { width: 4px; }
+.bc-left::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.bc-section { padding: 16px 16px; border-bottom: 1px solid var(--border); }
+.bc-section-title {
+  font-size: 9px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--gray2); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.bc-section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* Color picker */
+.picker-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+#colorWheel { border-radius: 50%; cursor: crosshair; display: block; }
+.sq-wrap { position: relative; display: inline-block; }
+#colorSquare { cursor: crosshair; display: block; border-radius: 3px; }
+#sqCursor {
+  position: absolute; width: 11px; height: 11px;
+  border-radius: 50%; border: 2px solid #fff;
+  box-shadow: 0 0 3px rgba(0,0,0,0.8);
+  transform: translate(-50%,-50%); pointer-events: none;
+}
+.preview-row { display: flex; align-items: center; gap: 10px; width: 100%; }
+.preview-box {
+  width: 48px; height: 48px; border-radius: 5px; flex-shrink: 0;
+  border: 2px solid var(--border2); transition: background .1s;
+}
+.rgb-inputs { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+.rgb-row { display: flex; align-items: center; gap: 5px; }
+.rgb-lbl { font-size: 10px; font-weight: 800; width: 12px; text-align: center; }
+.rgb-in {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 3px; padding: 4px 7px; color: var(--white);
+  font-size: 12px; font-family: 'Nunito', sans-serif; outline: none;
+}
+.rgb-in:focus { border-color: var(--purple); }
+.hex-in {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px; padding: 7px 10px; color: var(--white);
+  font-size: 14px; font-weight: 700; font-family: 'VT323', monospace;
+  outline: none; text-transform: uppercase; letter-spacing: 1px; text-align: center;
+}
+.hex-in:focus { border-color: var(--gold); }
+
+/* Verres */
+.glass-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.glass-sw {
+  aspect-ratio: 1; border-radius: 3px; cursor: pointer;
+  border: 2px solid transparent; position: relative; transition: all .12s;
+  overflow: hidden;
+}
+.glass-sw::after {
+  content:''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.15) 100%);
+}
+.glass-sw:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.4); }
+.glass-sw.off { opacity: .2; filter: grayscale(.6); }
+.glass-sw[title]:hover::before {
+  content: attr(title); position: absolute; bottom: 115%; left: 50%; transform: translateX(-50%);
+  background: var(--bg); border: 1px solid var(--border2); border-radius: 3px;
+  padding: 2px 6px; font-size: 9px; font-weight: 700; color: var(--white);
+  white-space: nowrap; pointer-events: none; z-index: 100;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Nombre de verres */
+.nb-row { display: flex; gap: 5px; }
+.nb-btn {
+  flex: 1; padding: 7px 4px; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--gray); font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: 'Nunito', sans-serif; transition: all .12s; text-align: center;
+}
+.nb-btn:hover { border-color: var(--border2); color: var(--white); }
+.nb-btn.on { background: rgba(240,192,64,.1); border-color: rgba(240,192,64,.4); color: var(--gold); }
+
+/* Bouton calculer */
+.calc-btn {
+  width: 100%; padding: 11px; background: var(--gold); color: #1a1000;
+  border: none; border-radius: 5px; font-size: 13px; font-weight: 800;
+  cursor: pointer; font-family: 'Nunito', sans-serif; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.calc-btn:hover { background: #f5cc55; box-shadow: 0 0 18px rgba(240,192,64,.25); }
+.calc-btn:active { transform: scale(.98); }
+
+/* ── PANNEAU DROIT ── */
+.bc-right { flex: 1; overflow-y: auto; padding: 20px 24px; min-width: 0; }
+.bc-right::-webkit-scrollbar { width: 5px; }
+.bc-right::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* Header résultat */
+.res-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.res-title { font-family: 'VT323', monospace; font-size: 28px; color: var(--gold); letter-spacing: 1px; line-height: 1; flex: 1; }
+.target-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 5px; padding: 7px 12px;
+}
+.target-swatch { width: 30px; height: 30px; border-radius: 4px; border: 1px solid var(--border2); flex-shrink: 0; }
+.target-meta { font-size: 10px; }
+.target-hex { font-family: 'VT323', monospace; font-size: 16px; color: var(--white); }
+.target-rgb { color: var(--gray2); margin-top: 1px; }
+
+/* Résultat card */
+.res-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+  margin-bottom: 10px; overflow: hidden;
+  animation: fadeUp .2s ease both;
+}
+.res-card.best { border-color: rgba(240,192,64,.4); }
+.res-card.best .res-card-header {
+  background: rgba(240,192,64,.06); border-bottom: 1px solid rgba(240,192,64,.15);
+  padding: 5px 14px; font-size: 9px; font-weight: 800;
+  color: var(--gold); letter-spacing: .5px; text-transform: uppercase;
+  display: block;
+}
+.res-card-header { display: none; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+.res-body { padding: 12px 14px; display: flex; gap: 14px; align-items: flex-start; }
+
+/* Faisceau preview */
+.beam-wrap { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.beam-outer { width: 20px; height: 80px; border-radius: 10px; opacity: .3; }
+.beam-inner { width: 8px; height: 80px; border-radius: 4px; margin-top: -80px; position: relative; opacity: .85; }
+.beam-base { width: 28px; height: 7px; background: linear-gradient(180deg,#aaa,#666); border-radius: 2px; border: 1px solid #444; }
+
+/* Verres combo */
+.glass-combo { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+.gc-item {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px;
+}
+.gc-sw { width: 20px; height: 20px; border-radius: 2px; border: 1px solid rgba(255,255,255,.12); flex-shrink: 0; position: relative; overflow: hidden; }
+.gc-sw::after { content:''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.25) 0%, transparent 50%); }
+.gc-name { font-size: 10px; font-weight: 700; color: var(--white); white-space: nowrap; }
+
+/* Stats */
+.res-stats { flex: 1; min-width: 0; }
+.color-compare { display: flex; height: 20px; border-radius: 3px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px; }
+.cc-half { flex: 1; position: relative; }
+.cc-lbl { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 8px; font-weight: 800; color: rgba(255,255,255,.7); text-transform: uppercase; white-space: nowrap; }
+.prox-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+.prox-label { font-size: 9px; font-weight: 800; color: var(--gray); text-transform: uppercase; letter-spacing: .5px; }
+.prox-pct { font-family: 'VT323', monospace; font-size: 20px; }
+.prox-track { height: 7px; background: var(--bg); border-radius: 3px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px; }
+.prox-fill { height: 100%; border-radius: 3px; transition: width .4s cubic-bezier(.34,1.56,.64,1); }
+.ch-row { display: flex; gap: 5px; }
+.ch { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: 4px 6px; text-align: center; }
+.ch-lbl { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+.ch-val { font-family: 'VT323', monospace; font-size: 15px; color: var(--white); }
+.ch-diff { font-size: 8px; margin-top: 1px; }
+.diff-pos { color: var(--orange); }
+.diff-neg { color: var(--blue); }
+.diff-ok  { color: var(--green); }
+
+/* Empty */
+.empty { text-align: center; padding: 60px 20px; color: var(--gray2); }
+.empty-icon { font-size: 44px; display: block; margin-bottom: 12px; }
+.empty h3 { font-size: 15px; font-weight: 800; color: var(--gray); margin-bottom: 4px; }
+.empty p { font-size: 11px; line-height: 1.6; }
+
+.section-title {
+  font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--gray2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="app">
+<div id="page-content">
+
+<div class="bc-left">
+
+  <div class="bc-section">
+    <span class="badge badge-gold" style="display:inline-block;margin-bottom:8px">Java 1.16–1.21</span>
+    <div style="font-family:'VT323',monospace;font-size:24px;color:var(--gold);line-height:1;margin-bottom:4px">🔦 Couleur Balise</div>
+    <div style="font-size:11px;color:var(--gray);line-height:1.5">Trouvez la combinaison de verres colorés reproduisant le mieux votre couleur cible.</div>
+  </div>
+
+  <div class="bc-section">
+    <div class="bc-section-title">Couleur cible</div>
+    <div class="picker-wrap">
+      <canvas id="colorWheel" width="180" height="180"></canvas>
+      <div class="sq-wrap">
+        <canvas id="colorSquare" width="180" height="120"></canvas>
+        <div id="sqCursor" style="left:100%;top:0%"></div>
+      </div>
+      <div style="width:100%">
+        <div class="preview-row" style="margin-bottom:8px">
+          <div class="preview-box" id="colorPreview"></div>
+          <div class="rgb-inputs">
+            <div class="rgb-row"><span class="rgb-lbl" style="color:#f87">R</span><input class="rgb-in" id="rIn" type="number" min="0" max="255" value="255" oninput="fromRGB()"></div>
+            <div class="rgb-row"><span class="rgb-lbl" style="color:#8f8">G</span><input class="rgb-in" id="gIn" type="number" min="0" max="255" value="0" oninput="fromRGB()"></div>
+            <div class="rgb-row"><span class="rgb-lbl" style="color:#8af">B</span><input class="rgb-in" id="bIn" type="number" min="0" max="255" value="0" oninput="fromRGB()"></div>
+          </div>
+        </div>
+        <input class="hex-in" id="hexIn" type="text" value="#FF0000" oninput="fromHex()" placeholder="#RRGGBB" maxlength="7">
+      </div>
+    </div>
+  </div>
+
+  <div class="bc-section">
+    <div class="bc-section-title">Verres disponibles <span style="font-size:9px;color:var(--border2);font-weight:600;text-transform:none;letter-spacing:0">(clic pour exclure)</span></div>
+    <div class="glass-grid" id="glassGrid"></div>
+  </div>
+
+  <div class="bc-section">
+    <div class="bc-section-title">Nombre de verres</div>
+    <div class="nb-row">
+      <button class="nb-btn on" data-n="1" onclick="toggleNb(this)">1 verre</button>
+      <button class="nb-btn on" data-n="2" onclick="toggleNb(this)">2 verres</button>
+      <button class="nb-btn on" data-n="3" onclick="toggleNb(this)">3 verres</button>
+    </div>
+  </div>
+
+  <div class="bc-section" style="border-bottom:none">
+    <button class="calc-btn" onclick="calculate()">
+      <span id="calcIcon">🔍</span><span id="calcTxt">Calculer</span>
+    </button>
+  </div>
+
+</div>
+
+<div class="bc-right" id="bcRight">
+  <div class="empty" id="emptyState">
+    <span class="empty-icon">🔦</span>
+    <h3>Prêt à calculer</h3>
+    <p>Choisissez une couleur cible à gauche,<br>puis cliquez sur <strong style="color:var(--white)">Calculer</strong>.</p>
+  </div>
+</div>
+
+</div>
+</div>
+<footer id="footer"></footer>
+</div>
+
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+"use strict";
+
+const GLASSES=[
+  {id:'white',      name:'Verre Blanc',       rgb:[255,255,255]},
+  {id:'orange',     name:'Verre Orange',      rgb:[216,127,51]},
+  {id:'magenta',    name:'Verre Magenta',     rgb:[178,76,216]},
+  {id:'light_blue', name:'Verre Bleu Clair',  rgb:[102,153,216]},
+  {id:'yellow',     name:'Verre Jaune',       rgb:[229,229,51]},
+  {id:'lime',       name:'Verre Vert Clair',  rgb:[127,204,25]},
+  {id:'pink',       name:'Verre Rose',        rgb:[242,127,165]},
+  {id:'gray',       name:'Verre Gris',        rgb:[76,76,76]},
+  {id:'light_gray', name:'Verre Gris Clair',  rgb:[153,153,153]},
+  {id:'cyan',       name:'Verre Cyan',        rgb:[76,127,153]},
+  {id:'purple',     name:'Verre Violet',      rgb:[127,63,178]},
+  {id:'blue',       name:'Verre Bleu',        rgb:[51,76,178]},
+  {id:'brown',      name:'Verre Marron',      rgb:[102,76,51]},
+  {id:'green',      name:'Verre Vert',        rgb:[102,127,51]},
+  {id:'red',        name:'Verre Rouge',       rgb:[153,51,51]},
+  {id:'black',      name:'Verre Noir',        rgb:[25,25,25]},
+];
+const MAX_DIST=Math.sqrt(255*255*3);
+
+let curH=0,curS=1,curV=1,tgt=[255,0,0];
+const excluded=new Set();
+
+// HSV ↔ RGB
+function hsvToRgb(h,s,v){
+  const i=Math.floor(h*6),f=h*6-i,p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);
+  let r,g,b;
+  switch(i%6){case 0:r=v,g=t,b=p;break;case 1:r=q,g=v,b=p;break;case 2:r=p,g=v,b=t;break;case 3:r=p,g=q,b=v;break;case 4:r=t,g=p,b=v;break;case 5:r=v,g=p,b=q;break;}
+  return[Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+}
+function rgbToHsv(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;let h=0,s=max?d/max:0,v=max;if(max!==min){switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h/=6;}return[h,s,v];}
+function rgbToHex(r,g,b){return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0').toUpperCase()).join('');}
+function rHex(r,g,b){return'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0').toUpperCase()).join('');}
+function hexToRgb(h){const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h);return m?[parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)]:null;}
+function cl(v){return Math.max(0,Math.min(255,v));}
+
+// Dessin roue
+function drawWheel(){
+  const cv=document.getElementById('colorWheel'),ctx=cv.getContext('2d');
+  const cx=cv.width/2,cy=cv.height/2,R=Math.min(cx,cy)-4,IN=R*.7;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  for(let a=0;a<360;a++){
+    const s1=(a-1)*Math.PI/180,s2=(a+1)*Math.PI/180;
+    const g=ctx.createRadialGradient(cx,cy,IN,cx,cy,R);
+    g.addColorStop(0,`hsl(${a},0%,100%)`);g.addColorStop(1,`hsl(${a},100%,50%)`);
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,s1,s2);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  }
+  ctx.beginPath();ctx.arc(cx,cy,IN,0,2*Math.PI);ctx.fillStyle='#1e2126';ctx.fill();
+}
+
+function drawSquare(){
+  const cv=document.getElementById('colorSquare'),ctx=cv.getContext('2d');
+  const [r,g,b]=hsvToRgb(curH,1,1);
+  ctx.clearRect(0,0,cv.width,cv.height);
+  const hg=ctx.createLinearGradient(0,0,cv.width,0);hg.addColorStop(0,'white');hg.addColorStop(1,`rgb(${r},${g},${b})`);
+  ctx.fillStyle=hg;ctx.fillRect(0,0,cv.width,cv.height);
+  const vg=ctx.createLinearGradient(0,0,0,cv.height);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,1)');
+  ctx.fillStyle=vg;ctx.fillRect(0,0,cv.width,cv.height);
+}
+
+function updateSqCursor(){
+  const cv=document.getElementById('colorSquare'),cur=document.getElementById('sqCursor');
+  cur.style.left=(curS*cv.width)+'px';cur.style.top=((1-curV)*cv.height)+'px';
+}
+
+function updateAll(){
+  const[r,g,b]=hsvToRgb(curH,curS,curV);tgt=[r,g,b];
+  document.getElementById('rIn').value=r;document.getElementById('gIn').value=g;document.getElementById('bIn').value=b;
+  document.getElementById('hexIn').value=rHex(r,g,b);document.getElementById('colorPreview').style.background=rHex(r,g,b);
+  drawSquare();updateSqCursor();
+}
+
+// Events roue
+let wDrag=false,sDrag=false;
+document.getElementById('colorWheel').addEventListener('mousedown',e=>{wDrag=handleWheel(e);});
+window.addEventListener('mousemove',e=>{if(wDrag)handleWheel(e);if(sDrag)handleSquare(e);});
+window.addEventListener('mouseup',()=>{wDrag=false;sDrag=false;});
+
+function handleWheel(e){
+  const cv=document.getElementById('colorWheel'),rect=cv.getBoundingClientRect();
+  const x=e.clientX-rect.left-cv.width/2,y=e.clientY-rect.top-cv.height/2;
+  const R=cv.width/2-4,IN=R*.7,d=Math.sqrt(x*x+y*y);
+  if(d<IN||d>R)return false;
+  curH=((Math.atan2(y,x)*180/Math.PI)+360)%360/360;updateAll();return true;
+}
+
+document.getElementById('colorSquare').addEventListener('mousedown',e=>{sDrag=true;handleSquare(e);});
+function handleSquare(e){
+  const cv=document.getElementById('colorSquare'),rect=cv.getBoundingClientRect();
+  curS=Math.max(0,Math.min(1,(e.clientX-rect.left)/cv.width));
+  curV=1-Math.max(0,Math.min(1,(e.clientY-rect.top)/cv.height));
+  updateAll();
+}
+
+function fromRGB(){
+  const r=cl(+document.getElementById('rIn').value||0),g=cl(+document.getElementById('gIn').value||0),b=cl(+document.getElementById('bIn').value||0);
+  tgt=[r,g,b];[curH,curS,curV]=rgbToHsv(r,g,b);
+  document.getElementById('hexIn').value=rHex(r,g,b);document.getElementById('colorPreview').style.background=rHex(r,g,b);
+  drawSquare();updateSqCursor();
+}
+
+function fromHex(){
+  const rgb=hexToRgb(document.getElementById('hexIn').value);if(!rgb)return;
+  tgt=rgb;[curH,curS,curV]=rgbToHsv(...rgb);
+  document.getElementById('rIn').value=rgb[0];document.getElementById('gIn').value=rgb[1];document.getElementById('bIn').value=rgb[2];
+  document.getElementById('colorPreview').style.background=rHex(...rgb);
+  drawSquare();updateSqCursor();
+}
+
+// Grille verres
+function buildGrid(){
+  document.getElementById('glassGrid').innerHTML=GLASSES.map(g=>{
+    const h=rHex(...g.rgb);
+    return`<div class="glass-sw" id="gs-${g.id}" style="background:${h}" onclick="toggleGlass('${g.id}')" title="${g.name}"></div>`;
+  }).join('');
+}
+function toggleGlass(id){
+  excluded.has(id)?excluded.delete(id):excluded.add(id);
+  document.getElementById('gs-'+id).classList.toggle('off',excluded.has(id));
+}
+
+// Nb verres
+function toggleNb(btn){btn.classList.toggle('on');}
+function getSelectedNbs(){return[...document.querySelectorAll('.nb-btn.on')].map(b=>+b.dataset.n);}
+
+// Calcul
+function dist(a,b){return Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2);}
+function prox(d){return Math.round((1-d/MAX_DIST)*100);}
+function avgRgb(gs){const n=gs.length;return[Math.round(gs.reduce((s,g)=>s+g.rgb[0],0)/n),Math.round(gs.reduce((s,g)=>s+g.rgb[1],0)/n),Math.round(gs.reduce((s,g)=>s+g.rgb[2],0)/n)];}
+
+function combos(arr,n,rep=true){
+  const r=[];
+  function pick(start,cur){if(cur.length===n){r.push([...cur]);return;}for(let i=start;i<arr.length;i++){cur.push(arr[i]);pick(rep?i:i+1,cur);cur.pop();}}
+  pick(0,[]);return r;
+}
+
+function calculate(){
+  const btn=document.querySelector('.calc-btn');
+  document.getElementById('calcIcon').textContent='⏳';document.getElementById('calcTxt').textContent='Calcul…';
+  btn.style.opacity='.7';
+  setTimeout(()=>{
+    const avail=GLASSES.filter(g=>!excluded.has(g.id));
+    if(!avail.length){alert('Activez au moins un verre.');btn.style.opacity='1';return;}
+    const nbs=getSelectedNbs();if(!nbs.length)return;
+    const[tr,tg,tb]=tgt;let all=[];
+    for(const n of nbs){for(const c of combos(avail,n)){const rgb=avgRgb(c);const d=dist(rgb,[tr,tg,tb]);all.push({glasses:c,rgb,dist:d,prox:prox(d),n});}}
+    const seen=new Set(),unique=all.filter(r=>{const k=r.rgb.join(',');if(seen.has(k))return false;seen.add(k);return true;});
+    unique.sort((a,b)=>a.dist-b.dist);
+    renderResults(unique.slice(0,8));
+    document.getElementById('calcIcon').textContent='✅';document.getElementById('calcTxt').textContent=unique.length.toLocaleString()+' combinaisons';
+    setTimeout(()=>{document.getElementById('calcIcon').textContent='🔍';document.getElementById('calcTxt').textContent='Recalculer';btn.style.opacity='1';},2500);
+  },20);
+}
+
+function pcol(p){if(p>=95)return'var(--gold)';if(p>=85)return'var(--green)';if(p>=70)return'var(--blue)';if(p>=55)return'var(--orange)';return'var(--red)';}
+
+function renderResults(results){
+  const right=document.getElementById('bcRight');
+  if(!results.length){right.innerHTML='<div class="empty"><span class="empty-icon">😕</span><h3>Aucun résultat</h3><p>Activez plus de verres.</p></div>';return;}
+  const[tr,tg,tb]=tgt;const tHex=rHex(tr,tg,tb);
+  const header=`<div class="res-header">
+    <div class="res-title">Résultats</div>
+    <div class="target-pill">
+      <div class="target-swatch" style="background:${tHex};box-shadow:0 0 10px ${tHex}55"></div>
+      <div class="target-meta"><div class="target-hex">${tHex}</div><div class="target-rgb">RGB(${tr},${tg},${tb})</div></div>
+    </div>
+  </div>`;
+  const cards=results.map((res,i)=>{
+    const[r,g,b]=res.rgb;const hex=rHex(r,g,b);const pc=pcol(res.prox);const best=i===0;
+    const glow=`0 0 16px ${hex}55, 0 0 40px ${hex}33`;
+    const glassRows=res.glasses.map(gl=>`
+      <div class="gc-item"><div class="gc-sw" style="background:${rHex(...gl.rgb)}"></div><div class="gc-name">${gl.name}</div></div>`).join('');
+    const[dr,dg,db]=[r-tr,g-tg,b-tb];
+    const df=v=>v>0?`<span class="diff-pos">+${v}</span>`:v<0?`<span class="diff-neg">${v}</span>`:`<span class="diff-ok">±0</span>`;
+    return`<div class="res-card ${best?'best':''}" style="animation-delay:${i*30}ms">
+      ${best?'<div class="res-card-header">🏆 Meilleure correspondance</div>':'<div class="res-card-header"></div>'}
+      <div class="res-body">
+        <div class="beam-wrap">
+          <div style="position:relative;width:24px;height:80px">
+            <div class="beam-outer" style="position:absolute;left:2px;top:0;width:20px;background:${hex};box-shadow:${glow}"></div>
+            <div class="beam-inner" style="position:absolute;left:8px;top:0;width:8px;background:${hex};box-shadow:${glow}"></div>
+          </div>
+          <div class="beam-base"></div>
+        </div>
+        <div class="glass-combo"><div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gray2);margin-bottom:4px">${res.n} verre${res.n>1?'s':''}</div>${glassRows}</div>
+        <div class="res-stats">
+          <div class="color-compare" style="margin-bottom:8px">
+            <div class="cc-half" style="background:${tHex}"><div class="cc-lbl">Cible</div></div>
+            <div class="cc-half" style="background:${hex}"><div class="cc-lbl">Résultat</div></div>
+          </div>
+          <div class="prox-row">
+            <span class="prox-label">Proximité</span>
+            <span class="prox-pct" style="color:${pc}">${res.prox} %</span>
+          </div>
+          <div class="prox-track"><div class="prox-fill" style="width:${res.prox}%;background:${pc}"></div></div>
+          <div class="ch-row">
+            <div class="ch"><div class="ch-lbl" style="color:#f87">R</div><div class="ch-val">${r}</div><div class="ch-diff">${df(dr)}</div></div>
+            <div class="ch"><div class="ch-lbl" style="color:#8f8">G</div><div class="ch-val">${g}</div><div class="ch-diff">${df(dg)}</div></div>
+            <div class="ch"><div class="ch-lbl" style="color:#8af">B</div><div class="ch-val">${b}</div><div class="ch-diff">${df(db)}</div></div>
+            <div class="ch"><div class="ch-lbl" style="color:var(--gray)">Δ</div><div class="ch-val" style="font-size:13px">${Math.round(res.dist)}</div><div class="ch-diff" style="color:var(--gray2);font-size:8px">dist</div></div>
+          </div>
+        </div>
+      </div></div>`;
+  }).join('');
+  right.innerHTML=header+cards;
+  requestAnimationFrame(()=>{document.querySelectorAll('.prox-fill').forEach(el=>{const w=el.style.width;el.style.width='0';requestAnimationFrame(()=>{el.style.width=w;});});});
+}
+
+// Init
+drawWheel();buildGrid();updateAll();
+document.getElementById('hexIn').addEventListener('keydown',e=>{if(e.key==='Enter')calculate();});
+</script>
+</body>
+</html>

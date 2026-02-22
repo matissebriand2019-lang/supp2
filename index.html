@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MineGuide — Outils Minecraft Java</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/common.css">
+<style>
+#page-content { overflow-y: auto; }
+
+.home-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 32px 60px;
+}
+
+/* Hero */
+.hero {
+  padding-bottom: 36px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 36px;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(240,192,64,0.07); border: 1px solid rgba(240,192,64,0.18);
+  border-radius: 20px; padding: 3px 12px; font-size: 10px; font-weight: 800;
+  color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
+}
+.live-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--green); box-shadow: 0 0 5px var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.hero h1 {
+  font-family: 'VT323', monospace;
+  font-size: 56px; color: var(--gold);
+  text-shadow: 0 0 32px rgba(240,192,64,0.18);
+  letter-spacing: 2px; line-height: 1; margin-bottom: 10px;
+}
+.hero h1 span { color: var(--white); }
+.hero-sub {
+  color: var(--gray); font-size: 13px; max-width: 500px;
+  line-height: 1.6; margin-bottom: 22px;
+}
+.hero-ctas { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Tools grid */
+.tools-title {
+  font-size: 9px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--border2); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.tools-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.tool-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 7px;
+  padding: 16px 18px; text-decoration: none; color: var(--white);
+  transition: all .12s; display: flex; flex-direction: column; gap: 10px;
+  position: relative; overflow: hidden;
+}
+.tool-card:hover {
+  border-color: rgba(240,192,64,.25);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.35);
+}
+.tool-card.wip {
+  opacity: .28; cursor: default; pointer-events: none;
+}
+.tool-card-header { display: flex; align-items: center; justify-content: space-between; }
+.tool-icon {
+  width: 38px; height: 38px; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.tool-name  { font-size: 13px; font-weight: 800; margin-bottom: 3px; }
+.tool-desc  { font-size: 11px; color: var(--gray); line-height: 1.55; flex: 1; }
+.tool-arrow {
+  font-size: 13px; color: var(--border2); transition: all .12s;
+  align-self: flex-end; margin-top: 2px;
+}
+.tool-card:hover .tool-arrow { color: var(--gold); transform: translateX(3px); }
+
+/* Hover glow tint */
+.tool-card::before {
+  content: ''; position: absolute; inset: 0; opacity: 0;
+  transition: opacity 0.2s;
+  background: radial-gradient(ellipse at top left, rgba(240,192,64,0.04), transparent 70%);
+}
+.tool-card:hover::before { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="app">
+<div id="page-content">
+<div class="home-wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge"><div class="live-dot"></div>Java 1.16 – 1.21.4</div>
+    <h1>Mine<span>Guide</span></h1>
+    <p class="hero-sub">
+      Outils Minecraft Java Édition — Carte seed, enchantements, nourriture, couleur de balise.
+      Toutes les versions de la 1.16 à la 1.21.4.
+    </p>
+    <div class="hero-ctas">
+      <a href="seedmap.html" class="btn btn-primary btn-lg">🗺️ Ouvrir la carte</a>
+      <a href="enchantments.html" class="btn btn-secondary btn-lg">✨ Enchantements</a>
+    </div>
+  </section>
+
+  <!-- TOOLS GRID -->
+  <div class="tools-title">Outils disponibles</div>
+  <div class="tools-grid">
+    <a href="seedmap.html" class="tool-card">
+      <div class="tool-card-header">
+        <div class="tool-icon">🗺️</div>
+        <span class="badge badge-green">Disponible</span>
+      </div>
+      <div>
+        <div class="tool-name">Carte Seed</div>
+        <div class="tool-desc">Biomes, structures et spawn. Versions 1.16 à 1.21.4.</div>
+      </div>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a href="enchantments.html" class="tool-card">
+      <div class="tool-card-header">
+        <div class="tool-icon">✨</div>
+        <span class="badge badge-green">Disponible</span>
+      </div>
+      <div>
+        <div class="tool-name">Enchantements</div>
+        <div class="tool-desc">Ordre optimal et coûts XP pour tous les objets.</div>
+      </div>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a href="food.html" class="tool-card">
+      <div class="tool-card-header">
+        <div class="tool-icon">🍖</div>
+        <span class="badge badge-green">Disponible</span>
+      </div>
+      <div>
+        <div class="tool-name">Nourriture</div>
+        <div class="tool-desc">Classement des aliments par saturation et situation.</div>
+      </div>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <a href="beacon.html" class="tool-card">
+      <div class="tool-card-header">
+        <div class="tool-icon">🔦</div>
+        <span class="badge badge-green">Disponible</span>
+      </div>
+      <div>
+        <div class="tool-name">Couleur Balise</div>
+        <div class="tool-desc">Combinaisons de verres colorés pour le faisceau d'une balise.</div>
+      </div>
+      <span class="tool-arrow">→</span>
+    </a>
+
+    <div class="tool-card wip">
+      <div class="tool-card-header">
+        <div class="tool-icon">🔨</div>
+        <span class="badge badge-gray">À venir</span>
+      </div>
+      <div>
+        <div class="tool-name">Recettes Craft</div>
+        <div class="tool-desc">Toutes les recettes de fabrication.</div>
+      </div>
+    </div>
+
+    <div class="tool-card wip">
+      <div class="tool-card-header">
+        <div class="tool-icon">⚙️</div>
+        <span class="badge badge-gray">À venir</span>
+      </div>
+      <div>
+        <div class="tool-name">Calculateur Farm</div>
+        <div class="tool-desc">Rendement de vos fermes automatiques.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+<footer id="footer"></footer>
+</div>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/auth.js"></script>
+</body>
+</html>

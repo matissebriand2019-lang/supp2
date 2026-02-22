@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil — MineGuide</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/common.css">
+<style>
+#page-content { overflow-y:auto; padding:28px 32px; }
+.profile-grid { display:grid; grid-template-columns:260px 1fr; gap:16px; max-width:860px; align-items:start; }
+.profile-card { background:var(--bg2); border:1px solid var(--border); border-radius:7px; padding:20px; text-align:center; position:sticky; top:0; }
+.profile-avatar { width:64px; height:64px; border-radius:50%; background:var(--gold2); border:2px solid var(--gold2); display:flex; align-items:center; justify-content:center; font-size:28px; color:var(--gold); font-weight:800; margin:0 auto 10px; overflow:hidden; }
+.profile-avatar img { width:100%; height:100%; object-fit:cover; }
+.profile-name { font-size:16px; font-weight:800; margin-bottom:2px; }
+.profile-email { font-size:11px; color:var(--gray); margin-bottom:14px; }
+.profile-stats { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:14px; }
+.pstat { background:var(--bg3); border:1px solid var(--border); border-radius:4px; padding:8px; text-align:center; }
+.pstat-num { font-family:'VT323',monospace; font-size:22px; color:var(--gold); line-height:1; }
+.pstat-lbl { font-size:9px; color:var(--gray2); margin-top:1px; }
+.section-card { background:var(--bg2); border:1px solid var(--border); border-radius:7px; padding:18px; margin-bottom:12px; }
+.section-card h2 { font-size:13px; font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+.seed-item { display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:4px; margin-bottom:6px; }
+.seed-num { font-family:'VT323',monospace; font-size:17px; color:var(--gold); flex:1; }
+.seed-label { font-size:10px; color:var(--gray); }
+.seed-actions { display:flex; gap:4px; }
+.seed-btn { background:none; border:1px solid var(--border); border-radius:3px; color:var(--gray); cursor:pointer; font-size:10px; padding:2px 7px; font-family:'Nunito',sans-serif; transition:all .1s; }
+.seed-btn:hover { background:var(--bg4); color:var(--white); }
+.seed-btn.del:hover { border-color:rgba(255,82,82,0.4); color:var(--red); }
+.add-row { display:flex; gap:6px; margin-top:8px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="app">
+<div id="page-content">
+  <div style="margin-bottom:20px">
+    <h1 style="font-family:'VT323',monospace;font-size:30px;color:var(--gold)">Mon Profil</h1>
+  </div>
+  <div id="profile-content" style="color:var(--gray);font-size:12px">Chargement...</div>
+</div>
+<footer id="footer"></footer>
+</div>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+window.Auth.onAuthChange(async function(user) {
+  if (!user) { window.location.href='login.html?redirect=profile.html'; return; }
+  await renderProfile(user);
+});
+
+async function renderProfile(user) {
+  var init=(user.displayName||user.email||'?')[0].toUpperCase();
+  var name=user.displayName||(user.email?user.email.split('@')[0]:'Joueur');
+  var data=await window.Auth.loadUserData('saved_seeds')||{seeds:[]};
+  var seeds=data.seeds||[];
+
+  document.getElementById('profile-content').innerHTML=
+    '<div class="profile-grid">'+
+    '<div>'+
+    '<div class="profile-card">'+
+    '<div class="profile-avatar">'+(user.photoURL?'<img src="'+user.photoURL+'" alt="">':init)+'</div>'+
+    '<div class="profile-name">'+name+'</div>'+
+    '<div class="profile-email">'+(user.email||'')+'</div>'+
+    '<div class="profile-stats">'+
+    '<div class="pstat"><div class="pstat-num" id="stat-seeds">'+seeds.length+'</div><div class="pstat-lbl">Seeds</div></div>'+
+    '<div class="pstat"><div class="pstat-num">1.21</div><div class="pstat-lbl">Version</div></div>'+
+    '</div>'+
+    '<button class="btn btn-danger btn-sm" style="width:100%;justify-content:center" onclick="doSignOut()">Se déconnecter</button>'+
+    '</div></div>'+
+    '<div>'+
+    '<div class="section-card">'+
+    '<h2>&#128506;&#65039; Seeds sauvegardées</h2>'+
+    '<div id="seeds-list"></div>'+
+    '<div class="add-row">'+
+    '<input class="input" id="new-seed" placeholder="Seed (ex: 8675309)" style="flex:1" />'+
+    '<input class="input" id="new-label" placeholder="Nom (optionnel)" style="width:140px" />'+
+    '<button class="btn btn-primary btn-sm" onclick="addSeed()">Ajouter</button>'+
+    '</div></div>'+
+    '<div class="section-card">'+
+    '<h2>&#9881;&#65039; Paramètres</h2>'+
+    '<div class="form-row">'+
+    '<div><label class="input-label">Pseudo</label><input class="input" id="edit-name" value="'+name+'" /></div>'+
+    '<div><label class="input-label">E-mail</label><input class="input" value="'+(user.email||'')+'" disabled style="opacity:.45" /></div>'+
+    '</div>'+
+    '<button class="btn btn-secondary btn-sm" onclick="MineGuide.showToast(\'Enregistré.\',\'success\')">Enregistrer</button>'+
+    '</div></div></div>';
+
+  renderSeeds(seeds);
+  document.getElementById('new-seed').addEventListener('keydown',function(e){if(e.key==='Enter')addSeed();});
+}
+
+function renderSeeds(seeds) {
+  var el=document.getElementById('seeds-list'); if(!el)return;
+  var stat=document.getElementById('stat-seeds'); if(stat)stat.textContent=seeds.length;
+  if(!seeds.length){el.innerHTML='<div style="font-size:11px;color:var(--gray);padding:4px 0">Aucune seed. Ajoutez-en une ci-dessous.</div>';return;}
+  el.innerHTML=seeds.map(function(s,i){
+    return '<div class="seed-item"><div><div class="seed-num">'+s.seed+'</div>'+(s.label?'<div class="seed-label">'+s.label+'</div>':'')+'</div>'+
+      '<div class="seed-actions" style="margin-left:auto">'+
+      '<button class="seed-btn" onclick="openSeed(\''+s.seed+'\')">Ouvrir</button>'+
+      '<button class="seed-btn del" onclick="deleteSeed('+i+')">&#10005;</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+async function addSeed(){
+  var sv=document.getElementById('new-seed').value.trim(),sl=document.getElementById('new-label').value.trim();
+  if(!sv){MineGuide.showToast('Entrez une seed.','error');return;}
+  var data=await window.Auth.loadUserData('saved_seeds')||{seeds:[]};
+  data.seeds.push({seed:sv,label:sl,addedAt:Date.now()});
+  await window.Auth.saveUserData('saved_seeds',data);
+  document.getElementById('new-seed').value='';document.getElementById('new-label').value='';
+  renderSeeds(data.seeds);MineGuide.showToast('Seed sauvegardée !','success');
+}
+async function deleteSeed(i){
+  var data=await window.Auth.loadUserData('saved_seeds')||{seeds:[]};
+  data.seeds.splice(i,1);await window.Auth.saveUserData('saved_seeds',data);
+  renderSeeds(data.seeds);
+}
+function openSeed(s){window.location.href='seedmap.html?seed='+encodeURIComponent(s);}
+async function doSignOut(){await window.Auth.signOut();window.location.href='index.html';}
+</script>
+</body>
+</html>

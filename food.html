@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nourriture — MineGuide</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/common.css">
+<style>
+#page-content { overflow-y: auto; }
+.food-wrap { padding: 20px 28px; max-width: 960px; margin: 0 auto; }
+.food-wrap h1 { font-family: 'VT323', monospace; font-size: 32px; color: var(--gold); text-shadow: 0 0 20px rgba(240,192,64,.3); letter-spacing: 1px; line-height: 1; margin-bottom: 4px; }
+.food-wrap .sub { color: var(--gray); font-size: 11px; margin-bottom: 18px; }
+.toolbar { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.tb-search { flex: 1; min-width: 160px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 6px 10px; color: var(--white); font-size: 11px; font-family: 'Nunito', sans-serif; outline: none; }
+.tb-search::placeholder { color: var(--border2); }
+.tb-search:focus { border-color: var(--gold); }
+.chip { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 4px 11px; color: var(--gray); font-size: 10px; font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all .1s; }
+.chip:hover { border-color: var(--border2); color: var(--white); }
+.chip.active { background: rgba(240,192,64,.1); border-color: rgba(240,192,64,.3); color: var(--gold); }
+.food-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 24px; }
+.food-table th { text-align: left; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--border2); padding: 7px 9px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
+.food-table th:hover { color: var(--gray); }
+.food-table th.sd::after { content: ' \2193'; }
+.food-table th.sa::after { content: ' \2191'; }
+.food-row { border-bottom: 1px solid rgba(255,255,255,.04); transition: background .08s; cursor: pointer; }
+.food-row:hover { background: var(--bg3); }
+.food-row td { padding: 7px 9px; vertical-align: middle; }
+.fn { display: flex; align-items: center; gap: 7px; }
+.fe { font-size: 18px; }
+.ft { font-weight: 700; color: var(--white); }
+.pips { display: flex; gap: 1px; }
+.pip { width: 7px; height: 7px; border-radius: 1px; background: var(--bg4); }
+.pip.f { background: #d05020; }
+.pip.h { background: linear-gradient(90deg,#d05020 50%,var(--bg4) 50%); }
+.sbar { width: 70px; height: 5px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+.sfill { height: 100%; border-radius: 2px; }
+.grade { font-family: 'VT323', monospace; font-size: 18px; }
+.gs{color:var(--gold)}.ga{color:var(--green)}.gb{color:var(--blue)}.gc{color:var(--gray)}.gd{color:var(--border2)}
+.ep { display:inline-flex; padding:1px 6px; border-radius:2px; font-size:9px; font-weight:700; }
+.pos{background:rgba(78,201,126,.1);border:1px solid rgba(78,201,126,.25);color:var(--green)}
+.neg{background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.2);color:var(--red)}
+.neu{background:rgba(77,143,255,.08);border:1px solid rgba(77,143,255,.2);color:var(--blue)}
+.ob{font-size:9px;font-weight:700}
+.ob-farm{color:var(--blue)}.ob-craft{color:var(--green)}.ob-loot{color:var(--gray)}
+.det { display:none; background:rgba(255,255,255,.02); }
+.det.open { display:table-row; }
+.det td { padding:8px 10px 10px 38px; font-size:11px; color:var(--gray); line-height:1.7; }
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="app">
+<div id="page-content">
+<div class="food-wrap">
+  <h1>&#127830; Nourriture</h1>
+  <p class="sub">Java Edition 1.16&#8211;1.21.4 &middot; Faim + saturation</p>
+  <div class="toolbar">
+    <input class="tb-search" id="fsearch" placeholder="&#128269; Rechercher..." oninput="render()"/>
+    <button class="chip active" id="c-all"     onclick="setF('all',this)">Tout</button>
+    <button class="chip"        id="c-viande"  onclick="setF('viande',this)">&#129385; Viandes</button>
+    <button class="chip"        id="c-culture" onclick="setF('culture',this)">&#127807; Cultures</button>
+    <button class="chip"        id="c-ocean"   onclick="setF('ocean',this)">&#128032; Ocean</button>
+    <button class="chip"        id="c-special" onclick="setF('special',this)">&#10024; Speciaux</button>
+  </div>
+  <div class="section-title">Tableau <span id="cnt" style="font-size:9px;color:var(--border2);text-transform:none;letter-spacing:0;font-weight:600;font-family:Nunito,sans-serif"></span></div>
+  <table class="food-table">
+    <thead><tr>
+      <th>Aliment</th>
+      <th onclick="srt('hunger',this)">Faim</th>
+      <th onclick="srt('sat',this)">Saturation</th>
+      <th onclick="srt('score',this)" class="sd">Score</th>
+      <th>Effets</th>
+      <th>Obtention</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+</div>
+<footer id="footer"></footer>
+</div>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+"use strict";
+var FOODS=[
+  {id:"steak",       name:"Steak",                 e:"&#129385;",cat:"viande",hunger:8, sat:12.8,score:99, fx:[],                                                                        ob:"farm", craft:"Viande Crue au four",             farm:"Ferme de vaches"},
+  {id:"pork",        name:"Cot. Porc Cuite",        e:"&#127830;",cat:"viande",hunger:8, sat:12.8,score:99, fx:[],                                                                        ob:"farm", craft:"Cotelette Crue au four",           farm:"Ferme de cochons"},
+  {id:"mutton",      name:"Mouton Cuit",             e:"&#127831;",cat:"viande",hunger:6, sat:9.6, score:78, fx:[],                                                                        ob:"farm", craft:"Cot. Mouton au four",             farm:"Ferme de moutons"},
+  {id:"rabbit_stew", name:"Ragout de Lapin",         e:"&#129368;",cat:"viande",hunger:10,sat:12.0,score:98, fx:[],                                                                        ob:"craft",craft:"Bol + Lapin Cuit + Carotte + Champignon + Pdterre Cuite",farm:""},
+  {id:"chicken",     name:"Poulet Cuit",             e:"&#127831;",cat:"viande",hunger:6, sat:7.2, score:65, fx:[],                                                                        ob:"farm", craft:"Poulet Cru au four",              farm:"Ferme de poulets"},
+  {id:"rabbit",      name:"Lapin Cuit",              e:"&#128007;",cat:"viande",hunger:5, sat:6.0, score:62, fx:[],                                                                        ob:"farm", craft:"Lapin Cru au four",               farm:"Ferme de lapins"},
+  {id:"rotten",      name:"Viande Pourrie",          e:"&#129503;",cat:"viande",hunger:4, sat:0.8, score:12, fx:[{l:"Faim 80%",t:"neg"}],                                                  ob:"loot", craft:"",                               farm:"", loot:"Zombies, Noyes / Coffres donjon, mine abandonnee, citadelle"},
+  {id:"rawchick",    name:"Poulet Cru",              e:"&#128020;",cat:"viande",hunger:2, sat:1.2, score:10, fx:[{l:"Faim 30%",t:"neg"}],                                                  ob:"loot", craft:"",                               farm:"", loot:"Drop naturel des poulets"},
+  {id:"bread",       name:"Pain",                    e:"&#127838;",cat:"culture",hunger:5, sat:6.0, score:62, fx:[],                                                                        ob:"craft",craft:"3 Bles en ligne (table de craft)",farm:"Ferme de ble"},
+  {id:"goldapple",   name:"Pomme Doree",             e:"&#127822;",cat:"culture",hunger:4, sat:9.6, score:55, fx:[{l:"Absorption II",t:"pos"},{l:"Regen II",t:"pos"}],                     ob:"craft",craft:"8 Lingots Or + 1 Pomme",          farm:""},
+  {id:"enchapple",   name:"Pomme Enchantee",         e:"&#10024;", cat:"culture",hunger:4, sat:9.6, score:55, fx:[{l:"Absorpt IV",t:"pos"},{l:"Regen V 20s",t:"pos"},{l:"Resist 5min",t:"pos"}], ob:"loot",craft:"Non craftable (1.9+)",farm:"", loot:"Coffres : donjon, mine, citadelle, temple desert, forteresse nether"},
+  {id:"carrot",      name:"Carotte",                 e:"&#129365;",cat:"culture",hunger:3, sat:3.6, score:32, fx:[],                                                                        ob:"farm", craft:"",                               farm:"Ferme de carottes"},
+  {id:"bpotato",     name:"Pdterre Cuite",           e:"&#129364;",cat:"culture",hunger:5, sat:6.0, score:62, fx:[],                                                                        ob:"farm", craft:"Pomme de Terre au four",           farm:"Ferme de pdterres"},
+  {id:"ppie",        name:"Tarte Citrouille",        e:"&#129383;",cat:"culture",hunger:8, sat:4.8, score:72, fx:[],                                                                        ob:"craft",craft:"Citrouille + Sucre + Oeuf",       farm:"Ferme de citrouilles"},
+  {id:"bsoup",       name:"Soupe Betterave",         e:"&#129379;",cat:"culture",hunger:6, sat:7.2, score:65, fx:[],                                                                        ob:"craft",craft:"6 Betteraves + Bol",              farm:"Ferme de betteraves"},
+  {id:"apple",       name:"Pomme",                   e:"&#127823;",cat:"culture",hunger:4, sat:2.4, score:28, fx:[],                                                                        ob:"loot", craft:"",                               farm:"", loot:"Feuilles de chene (Fortune), coffres village/donjon"},
+  {id:"gcarrot",     name:"Carotte Doree",           e:"&#129365;",cat:"culture",hunger:6, sat:14.4,score:100,fx:[],                                                                        ob:"craft",craft:"8 Pepites Or + 1 Carotte",        farm:""},
+  {id:"melon",       name:"Tranche Pasteque",        e:"&#127817;",cat:"culture",hunger:2, sat:1.2, score:10, fx:[],                                                                        ob:"farm", craft:"",                               farm:"Ferme de pasteques"},
+  {id:"sberries",    name:"Baies Sucrees",           e:"&#127827;",cat:"culture",hunger:2, sat:0.4, score:6,  fx:[],                                                                        ob:"farm", craft:"",                               farm:"Buissons de baies (Taiga)"},
+  {id:"gberries",    name:"Baies Lumineuses",        e:"&#129759;",cat:"culture",hunger:2, sat:0.4, score:6,  fx:[],                                                                        ob:"loot", craft:"",                               farm:"", loot:"Vignes dans les grottes luxuriantes"},
+  {id:"kelp",        name:"Algue Sechee",            e:"&#127807;",cat:"culture",hunger:1, sat:0.6, score:5,  fx:[],                                                                        ob:"farm", craft:"Algue au four",                  farm:"Ferme d algues (ocean)"},
+  {id:"salmon",      name:"Saumon Cuit",             e:"&#128032;",cat:"ocean",  hunger:6, sat:9.6, score:78, fx:[],                                                                        ob:"farm", craft:"Saumon au four",                 farm:"Peche / rivieres froides"},
+  {id:"cod",         name:"Cabillaud Cuit",          e:"&#128032;",cat:"ocean",  hunger:5, sat:6.0, score:62, fx:[],                                                                        ob:"farm", craft:"Cabillaud au four",              farm:"Peche / villages pecheurs"},
+  {id:"trfish",      name:"Poisson Tropical",        e:"&#128033;",cat:"ocean",  hunger:1, sat:0.2, score:3,  fx:[],                                                                        ob:"loot", craft:"",                               farm:"", loot:"Oceans chauds / peche"},
+  {id:"puffer",      name:"Poisson Gonflable",       e:"&#128032;",cat:"ocean",  hunger:1, sat:0.2, score:2,  fx:[{l:"Faim III",t:"neg"},{l:"Nausee",t:"neg"},{l:"Poison IV",t:"neg"}],     ob:"loot", craft:"",                               farm:"", loot:"Peche / Oceans chauds et tieedes"},
+  {id:"honey",       name:"Bouteille de Miel",       e:"&#127855;",cat:"special",hunger:6, sat:1.2, score:30, fx:[{l:"Retire Poison",t:"pos"}],                                             ob:"farm", craft:"Bouteille Vide sur ruche",        farm:"Ferme d abeilles"},
+  {id:"chorus",      name:"Fruit du Chorus",         e:"&#128993;",cat:"special",hunger:4, sat:2.4, score:28, fx:[{l:"Teleportation",t:"neu"}],                                             ob:"loot", craft:"",                               farm:"", loot:"Plantes Chorus dans l End (iles exterieures)"},
+  {id:"mstew",       name:"Soupe Champignons",       e:"&#127346;",cat:"special",hunger:6, sat:7.2, score:65, fx:[],                                                                        ob:"craft",craft:"Bol + Champignon Rouge + Brun",   farm:""},
+  {id:"sstew",       name:"Soupe Suspecte",          e:"&#129373;",cat:"special",hunger:6, sat:7.2, score:65, fx:[{l:"Effet fleur",t:"neu"}],                                               ob:"craft",craft:"Bol + Champignons + Fleur",       farm:""},
+  {id:"cookie",      name:"Biscuit",                 e:"&#127850;",cat:"special",hunger:2, sat:0.4, score:6,  fx:[],                                                                        ob:"craft",craft:"2 Bles + Feve de Cacao",          farm:""},
+];
+
+var cur="all", scol="score", sdir="desc";
+
+function grade(s){
+  if(s>=90)return["S","gs"];
+  if(s>=70)return["A","ga"];
+  if(s>=50)return["B","gb"];
+  if(s>=25)return["C","gc"];
+  return["D","gd"];
+}
+
+function pips(h){
+  var o='<div class="pips">';
+  for(var i=0;i<10;i++){
+    var full=(i+1)*2<=h, half=!full&&i*2+1===h;
+    o+='<div class="pip'+(full?' f':half?' h':'')+'"'+'></div>';
+  }
+  return o+'</div>';
+}
+
+function sbar(s){
+  var pct=Math.min(100,s/14.4*100);
+  var col=s>=12?'var(--gold)':s>=8?'var(--green)':s>=4?'var(--blue)':'var(--border2)';
+  return '<div class="sbar"><div class="sfill" style="width:'+pct+'%;background:'+col+'"></div></div>'
+        +'<span style="font-size:9px;color:var(--gray);margin-left:4px">'+s.toFixed(1)+'</span>';
+}
+
+function render(){
+  var q=document.getElementById("fsearch").value||"";
+  var data=FOODS.slice();
+  if(cur!=="all") data=data.filter(function(f){return f.cat===cur;});
+  if(q) data=data.filter(function(f){return f.name.toLowerCase().indexOf(q.toLowerCase())>=0;});
+  data.sort(function(a,b){return sdir==="asc"?a[scol]-b[scol]:b[scol]-a[scol];});
+  document.getElementById("cnt").textContent="— "+data.length;
+  var rows="";
+  for(var i=0;i<data.length;i++){
+    var f=data[i];
+    var gr=grade(f.score);
+    var fx=f.fx.map(function(e){return'<span class="ep '+e.t+'">'+e.l+'</span>';}).join(" ");
+    var oc=f.ob==="farm"?"ob-farm":f.ob==="craft"?"ob-craft":"ob-loot";
+    var ol=f.ob==="farm"?"Ferme":f.ob==="craft"?"Craft":"Loot";
+    var det="";
+    if(f.craft) det+='<strong style="color:var(--white)">Craft :</strong> '+f.craft+"<br>";
+    if(f.farm)  det+='<strong style="color:var(--blue)">Farm :</strong> '+f.farm+"<br>";
+    if(f.loot)  det+='<strong style="color:var(--orange)">&#128205; Ou trouver :</strong> '+f.loot;
+    rows+='<tr class="food-row" onclick="tog(\''+f.id+'\')">'
+         +'<td><div class="fn"><span class="fe">'+f.e+'</span><span class="ft">'+f.name+'</span></div></td>'
+         +'<td>'+pips(f.hunger)+'<span style="font-size:9px;color:var(--gray)"> '+f.hunger+'/20</span></td>'
+         +'<td><div style="display:flex;align-items:center">'+sbar(f.sat)+'</div></td>'
+         +'<td><span class="grade '+gr[1]+'">'+gr[0]+'</span></td>'
+         +'<td>'+(fx||'<span style="color:var(--border2)">&#8212;</span>')+'</td>'
+         +'<td><span class="ob '+oc+'">'+ol+'</span></td>'
+         +'</tr>'
+         +'<tr class="det" id="d_'+f.id+'"><td colspan="6">'+det+'</td></tr>';
+  }
+  document.getElementById("tbody").innerHTML=rows;
+}
+
+function tog(id){
+  var el=document.getElementById("d_"+id);
+  if(el) el.classList.toggle("open");
+}
+
+function srt(col,th){
+  if(scol===col) sdir=sdir==="asc"?"desc":"asc";
+  else{scol=col;sdir="desc";}
+  document.querySelectorAll(".food-table th").forEach(function(t){t.classList.remove("sa","sd");});
+  th.classList.add(sdir==="asc"?"sa":"sd");
+  render();
+}
+
+function setF(cat,btn){
+  cur=cat;
+  document.querySelectorAll(".chip").forEach(function(b){b.classList.remove("active");});
+  if(btn) btn.classList.add("active");
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

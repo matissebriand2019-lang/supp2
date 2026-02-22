@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Carte Seed — MineGuide</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/common.css">
+<style>
+body{overflow:hidden;}#page-content{overflow:hidden;position:relative;}
+#toolbar{position:absolute;top:0;left:0;right:0;z-index:20;background:rgba(10,11,13,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:7px 12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-height:46px;}
+.tb-group{display:flex;align-items:center;gap:5px;}.tb-sep{width:1px;height:22px;background:var(--border);flex-shrink:0;}
+.tb-input{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 9px;color:var(--white);font-size:12px;font-family:'Nunito',sans-serif;outline:none;transition:border-color .12s;}
+.tb-input:focus{border-color:var(--gold);}.tb-input::placeholder{color:var(--border2);}
+.tb-input.seed{width:155px;font-family:'VT323',monospace;font-size:15px;}
+.tb-select{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 8px;color:var(--white);font-size:11px;font-family:'Nunito',sans-serif;outline:none;cursor:pointer;max-width:200px;}
+.tb-select option{background:var(--bg3);}
+.tb-btn{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:5px 10px;color:var(--gray);font-size:11px;font-weight:700;font-family:'Nunito',sans-serif;cursor:pointer;transition:all .1s;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+.tb-btn:hover{border-color:var(--border2);color:var(--white);}.tb-btn.active{background:rgba(240,192,64,.1);border-color:rgba(240,192,64,.3);color:var(--gold);}
+.tb-btn.primary{background:var(--gold);border-color:var(--gold);color:#1a1000;font-size:12px;font-weight:800;}
+.tb-btn.primary:hover{background:#f5cc55;}
+#struct-bar{position:absolute;top:46px;left:0;right:0;z-index:19;background:rgba(10,11,13,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:4px 12px;display:none;align-items:center;gap:3px;flex-wrap:wrap;}
+.struct-toggle{display:flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;border:1px solid transparent;cursor:pointer;font-size:10px;font-weight:700;font-family:'Nunito',sans-serif;transition:all .1s;color:var(--gray);background:none;white-space:nowrap;}
+.struct-toggle:hover{background:var(--bg3);}.struct-toggle.on{background:rgba(255,255,255,.05);border-color:var(--border);color:var(--white);}
+.struct-toggle .dot{width:7px;height:7px;border-radius:2px;flex-shrink:0;}
+#map-wrap{position:absolute;inset:0;top:78px;cursor:crosshair;overflow:hidden;background:#060709;}
+#mapCanvas{position:absolute;inset:0;image-rendering:pixelated;}#structCanvas{position:absolute;inset:0;pointer-events:none;}
+#tooltip{position:absolute;z-index:50;pointer-events:none;background:rgba(10,11,13,.97);border:1px solid var(--border2);border-radius:5px;padding:7px 11px;font-size:11px;box-shadow:0 4px 20px rgba(0,0,0,.6);display:none;white-space:nowrap;}
+#tooltip .tt-name{font-weight:800;color:var(--white);margin-bottom:3px;}#tooltip .tt-coord{font-family:'VT323',monospace;font-size:15px;color:var(--gold);}
+#bottombar{position:absolute;bottom:0;left:0;right:0;z-index:20;background:rgba(10,11,13,.93);backdrop-filter:blur(6px);border-top:1px solid var(--border);padding:5px 12px;display:flex;align-items:center;gap:10px;font-size:10px;}
+#coords-display{font-family:'VT323',monospace;font-size:14px;color:var(--gold);min-width:145px;}
+.bb-sep{color:var(--border2);}#biome-display{color:var(--gray2);flex:1;}
+.goto-wrap{display:flex;align-items:center;gap:5px;margin-left:auto;}
+.goto-input{background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:3px 7px;color:var(--white);font-size:11px;font-family:'VT323',monospace;width:75px;outline:none;}
+.goto-input:focus{border-color:var(--gold);}
+#biome-legend{position:absolute;right:8px;top:86px;z-index:15;background:rgba(10,11,13,.97);border:1px solid var(--border);border-radius:5px;padding:8px 10px;display:none;max-height:400px;overflow-y:auto;width:160px;}
+#biome-legend.visible{display:block;}
+.bl-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:7px;}
+.bl-item{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+.bl-swatch{width:9px;height:9px;border-radius:1px;flex-shrink:0;}.bl-name{font-size:9px;color:var(--gray2);}
+#empty-state{position:absolute;inset:0;top:78px;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:none;}
+.es-icon{font-size:48px;opacity:.12;}.es-text{font-size:13px;color:var(--border2);font-weight:700;}.es-hint{font-size:11px;color:var(--border);}
+#rs{position:absolute;top:85px;right:12px;z-index:25;background:rgba(10,11,13,.85);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:10px;color:var(--gray);display:none;align-items:center;gap:6px;}
+.ms{width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="sidebar"></div>
+<div id="app">
+<div id="page-content">
+<div id="toolbar">
+  <div class="tb-group">
+    <input id="seedInput" class="tb-input seed" type="text" placeholder="Seed ou texte…"/>
+    <select id="versionSelect" class="tb-select"></select>
+    <button class="tb-btn primary" onclick="loadMap()">▶ Générer</button>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-group">
+    <button class="tb-btn" onclick="adjustZoom(.667)">−</button>
+    <span id="zoomLabel" style="font-size:10px;color:var(--gray);min-width:42px;text-align:center">—</span>
+    <button class="tb-btn" onclick="adjustZoom(1.5)">+</button>
+    <button class="tb-btn" onclick="resetView()" title="Recentrer">⌖</button>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-group">
+    <button class="tb-btn" id="btnGrid"   onclick="toggleGrid()">Grille</button>
+    <button class="tb-btn" id="btnLegend" onclick="toggleLegend()">Légende</button>
+    <button class="tb-btn" onclick="shareLink()">⎘ Partager</button>
+  </div>
+</div>
+<div id="struct-bar"></div>
+<div id="map-wrap">
+  <canvas id="mapCanvas"></canvas><canvas id="structCanvas"></canvas>
+  <div id="tooltip"><div class="tt-name" id="ttName"></div><div class="tt-coord" id="ttCoord"></div></div>
+  <div id="empty-state">
+    <div class="es-icon">🗺️</div>
+    <div class="es-text">Entrez une seed et cliquez sur Générer</div>
+    <div class="es-hint">Versions 1.16 à 1.21.4 · Seeds numériques et texte</div>
+  </div>
+  <div id="rs"><div class="ms"></div><span>Rendu…</span></div>
+</div>
+<div id="bottombar">
+  <span id="coords-display">X: —  Z: —</span>
+  <span class="bb-sep">·</span><span id="biome-display">—</span>
+  <div class="goto-wrap">
+    <span style="font-size:10px;color:var(--gray)">Aller à</span>
+    <input class="goto-input" id="gotoX" placeholder="X"/><input class="goto-input" id="gotoZ" placeholder="Z"/>
+    <button class="tb-btn" onclick="gotoCoords()" style="padding:3px 8px;font-size:10px">OK</button>
+  </div>
+</div>
+<div id="biome-legend"><div class="bl-title">Biomes</div><div id="legendItems"></div></div>
+</div>
+<footer id="footer"></footer>
+</div>
+<script src="assets/js/nav.js"></script>
+<script src="assets/js/auth.js"></script>
+<script>
+"use strict";
+let seed=0,version='1.21.4',zoom=4,camX=0,camZ=0,showGrid=false;
+let visStructs=new Set(),biomeGen=null,structData={},structConfigs=[];
+let dragging=false,lastMX=0,lastMY=0;
+const tileCache=new Map();
+const TILE=64;
+let raf=null;
+const _oc=document.createElement('canvas');_oc.width=_oc.height=TILE;const _octx=_oc.getContext('2d');
+
+function init(){
+  const sel=document.getElementById('versionSelect');
+  MC.VERSION_LIST.forEach(v=>{const o=document.createElement('option');o.value=v.value;o.textContent=v.label;if(v.value==='1.21.4')o.selected=true;sel.appendChild(o);});
+  version='1.21.4';
+  sel.addEventListener('change',()=>{version=sel.value;clearAll();});
+  resize();window.addEventListener('resize',()=>{resize();sched();});
+  const p=new URLSearchParams(location.search);
+  if(p.get('seed')){document.getElementById('seedInput').value=p.get('seed');if(p.get('v')){version=p.get('v');sel.value=version;}loadMap();}
+  const w=document.getElementById('map-wrap');
+  w.addEventListener('mousedown',onMD);w.addEventListener('mousemove',onMM);
+  w.addEventListener('mouseup',()=>dragging=false);w.addEventListener('mouseleave',()=>{dragging=false;hideTT();});
+  w.addEventListener('wheel',onWh,{passive:false});
+  document.getElementById('gotoX').addEventListener('keydown',e=>e.key==='Enter'&&gotoCoords());
+  document.getElementById('gotoZ').addEventListener('keydown',e=>e.key==='Enter'&&gotoCoords());
+  document.getElementById('seedInput').addEventListener('keydown',e=>e.key==='Enter'&&loadMap());
+}
+function resize(){const w=document.getElementById('map-wrap');const W=w.clientWidth,H=w.clientHeight;['mapCanvas','structCanvas'].forEach(id=>{const c=document.getElementById(id);if(c.width!==W||c.height!==H){c.width=W;c.height=H;}});}
+function cW(){return document.getElementById('mapCanvas').width;}function cH(){return document.getElementById('mapCanvas').height;}
+function loadMap(){
+  const raw=document.getElementById('seedInput').value.trim();if(!raw)return;
+  const parsed=MC.parseSeed(raw);if(parsed===null)return;
+  seed=parsed;version=document.getElementById('versionSelect').value;
+<script src="assets/js/nav.js"></script>
+<!-- Pas de minecraft.js — tout passe par le Worker WASM -->
+<script>
+"use strict";
+
+/* ═══════════════════════════════════════════════════════════
+   VERSIONS
+═══════════════════════════════════════════════════════════ */
+const VERSIONS = [
+  {value:'1.21.4',label:'Java 1.21.4'},
+  {value:'1.21.1',label:'Java 1.21.1'},
+  {value:'1.20.4',label:'Java 1.20.4'},
+  {value:'1.20.1',label:'Java 1.20.1'},
+  {value:'1.19.4',label:'Java 1.19.4'},
+  {value:'1.18.2',label:'Java 1.18.2'},
+  {value:'1.18',  label:'Java 1.18'},
+  {value:'1.17',  label:'Java 1.17'},
+  {value:'1.16.5',label:'Java 1.16.5'},
+  {value:'1.16',  label:'Java 1.16'},
+];
+
+/* ═══════════════════════════════════════════════════════════
+   NOMS FR DES BIOMES (pour legende + barre bas)
+═══════════════════════════════════════════════════════════ */
+const BIOME_FR = {
+  0:'Océan', 1:'Plaines', 2:'Désert', 3:'Montagnes', 4:'Forêt',
+  5:'Taïga', 6:'Marais', 7:'Rivière', 10:'Océan Gelé', 11:'Rivière Gelée',
+  12:'Plaines Enneigées', 14:'Îles Champignons', 16:'Plage', 21:'Jungle',
+  23:'Jungle Clairsemée', 24:'Océan Profond', 25:'Côte Rocheuse',
+  27:'Forêt de Bouleaux', 29:'Forêt Sombre', 30:'Taïga Enneigée',
+  32:'Taïga de Pins', 33:'Taïga Épicéas', 35:'Savane', 36:'Plateau Savane',
+  37:'Badlands', 38:'Badlands Érodés', 39:'Badlands Boisés',
+  60:'Plaines Enneigées', 61:'Pics Glaciaires',
+  85:'Vallée Sable des Âmes', 86:'Forêt Cramoisie',
+  87:'Forêt Distordue', 88:'Deltas de Basalte',
+  177:'Prairie', 178:'Bosquet', 179:'Flancs Enneigés',
+  180:'Pics Gelés', 181:'Pics Déchiquetés', 182:'Pics Rocailleux',
+  183:'Bosquet de Cerisiers', 184:'Cité Antique', 185:'Mangrove',
+};
+
+/* ═══════════════════════════════════════════════════════════
+   ÉTAT GLOBAL
+═══════════════════════════════════════════════════════════ */
+var worker     = null;    // Web Worker
+var workerReady= false;   // WASM chargé dans le worker
+var seed       = 0;
+var version    = '1.21.4';
+var zoom       = 4;
+var camX       = 0, camZ = 0;
+var showGrid   = false;
+var dragging   = false;
+var lastMX     = 0, lastMY = 0;
+var raf        = null;
+
+var tileCache  = new Map();   // key → Uint8ClampedArray (RGBA)
+var tileQueue  = [];          // tiles en attente d'envoi au worker
+var tilesInFlight = 0;        // nb tuiles actuellement traitées par le worker
+var MAX_INFLIGHT = 4;         // concurrence worker
+var nextTileId = 0;
+var pendingTiles = new Map(); // id → {key, tx, tz, tb}
+
+var structData = {};          // données structures depuis worker
+var visStructs = new Set();
+var structConfigs = [];
+
+var _oc   = null;             // OffscreenCanvas (ou canvas DOM)
+var _octx = null;
+
+const TILE = 64;  // pixels par tuile
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════ */
+function init() {
+  /* Version selector */
+  var sel = document.getElementById('versionSelect');
+  VERSIONS.forEach(function(v) {
+    var o = document.createElement('option');
+    o.value = v.value; o.textContent = v.label;
+    if (v.value === '1.21.4') o.selected = true;
+    sel.appendChild(o);
+  });
+  version = sel.value;
+  sel.addEventListener('change', function(){ version = sel.value; });
+
+  /* Offscreen canvas pour dessin tuiles */
+  try {
+    _oc   = new OffscreenCanvas(TILE, TILE);
+    _octx = _oc.getContext('2d');
+  } catch(e) {
+    _oc   = document.createElement('canvas');
+    _oc.width = _oc.height = TILE;
+    _octx = _oc.getContext('2d');
+  }
+
+  /* Canvas resize */
+  resizeC();
+  window.addEventListener('resize', function(){ resizeC(); sched(); });
+
+  /* URL params */
+  var p = new URLSearchParams(location.search);
+  if (p.get('seed')) {
+    document.getElementById('seedInput').value = p.get('seed');
+    if (p.get('v')) { version = p.get('v'); sel.value = version; }
+  }
+
+  /* Events carte */
+  var wrap = document.getElementById('map-wrap');
+  wrap.addEventListener('mousedown',  onMD);
+  wrap.addEventListener('mousemove',  onMM);
+  wrap.addEventListener('mouseup',    function(){ dragging=false; });
+  wrap.addEventListener('mouseleave', function(){ dragging=false; hideTT(); });
+  wrap.addEventListener('wheel',      onWh, {passive:false});
+  wrap.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+
+  /* Touch */
+  var ltd = 0;
+  wrap.addEventListener('touchstart', function(e){
+    if (e.touches.length===2) { ltd = Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); }
+    else if (e.touches.length===1) { dragging=true; lastMX=e.touches[0].clientX; lastMY=e.touches[0].clientY; }
+  },{passive:true});
+  wrap.addEventListener('touchmove', function(e){
+    if (e.touches.length===2) { var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); setZoom(zoom*(ltd/d)); ltd=d; }
+    else if (e.touches.length===1&&dragging){ camX-=(e.touches[0].clientX-lastMX)*zoom; camZ-=(e.touches[0].clientY-lastMY)*zoom; lastMX=e.touches[0].clientX; lastMY=e.touches[0].clientY; sched(); }
+  },{passive:true});
+  wrap.addEventListener('touchend', function(){ dragging=false; });
+
+  /* Keyboard */
+  document.getElementById('seedInput').addEventListener('keydown', function(e){ if(e.key==='Enter') loadMap(); });
+  document.getElementById('gotoX').addEventListener('keydown', function(e){ if(e.key==='Enter') gotoCoords(); });
+  document.getElementById('gotoZ').addEventListener('keydown', function(e){ if(e.key==='Enter') gotoCoords(); });
+
+  /* Lance le worker */
+  initWorker();
+
+  /* Si URL avec seed → charge après init worker */
+  if (p.get('seed')) {
+    /* Attendre que le worker soit prêt */
+    var waitReady = setInterval(function(){
+      if (workerReady) { clearInterval(waitReady); loadMap(); }
+    }, 100);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WORKER
+═══════════════════════════════════════════════════════════ */
+function initWorker() {
+  try {
+    worker = new Worker('assets/js/cubiomes_worker.js');
+  } catch(e) {
+    showWasmBanner('Impossible de créer le Worker : ' + e.message);
+    return;
+  }
+
+  worker.onmessage = function(e) {
+    var msg = e.data;
+    switch (msg.type) {
+
+      case 'ready':
+        workerReady = true;
+        hideWasmBanner();
+        break;
+
+      case 'error':
+        showWasmBanner(msg.msg);
+        break;
+
+      case 'init_ok':
+        if (!msg.ok) { showWasmBanner('Erreur init générateur.'); return; }
+        /* Génère structures en arrière-plan */
+        worker.postMessage({ type:'structures', seed:seed, version:version, radiusChunks:1600 });
+        /* Lance le rendu */
+        document.getElementById('empty-state').style.display = 'none';
+        resetView();
+        break;
+
+      case 'tile':
+        tilesInFlight--;
+        if (msg.rgba) {
+          var info = pendingTiles.get(msg.id);
+          if (info) {
+            tileCache.set(info.key, msg.rgba);
+            pendingTiles.delete(msg.id);
+          }
+        }
+        /* Envoie la tuile suivante en attente */
+        pumpQueue();
+        /* Redessine */
+        sched();
+        break;
+
+      case 'structures':
+        structData = msg.data;
+        /* Construit la barre de structures */
+        buildStructBar();
+        drawS();
+        break;
+    }
+  };
+
+  worker.onerror = function(e) {
+    showWasmBanner('Erreur Worker : ' + (e.message || String(e)) +
+      '<br><br>Avez-vous compilé cubiomes ? Voir <strong>README_COMPILE.md</strong>');
+  };
+}
+
+function showWasmBanner(msg) {
+  var b = document.getElementById('wasm-banner');
+  if (b) { b.innerHTML = '⚠️ ' + msg; b.style.display = 'flex'; }
+}
+function hideWasmBanner() {
+  var b = document.getElementById('wasm-banner');
+  if (b) b.style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHARGEMENT CARTE
+═══════════════════════════════════════════════════════════ */
+function parseSeed(raw) {
+  raw = raw.trim();
+  if (!raw) return null;
+  if (/^-?\d+$/.test(raw)) return parseInt(raw, 10);
+  /* Hash texte → int32 Java style */
+  var h = 0;
+  for (var i = 0; i < raw.length; i++) h = Math.imul(31, h) + raw.charCodeAt(i) | 0;
+  return h;
+}
+
+function loadMap() {
+  if (!workerReady) { showWasmBanner('WASM non chargé — compilez d\'abord cubiomes (voir README_COMPILE.md)'); return; }
+
+  var raw = document.getElementById('seedInput').value;
+  var s = parseSeed(raw);
+  if (s === null) return;
+  seed    = s;
+  version = document.getElementById('versionSelect').value;
+
+  /* Vide le cache et la queue */
+  tileCache.clear();
+  tileQueue = [];
+  pendingTiles.clear();
+  tilesInFlight = 0;
+  structData = {};
+
+  /* Efface canvas */
+  var W = cW(), H = cH();
+  ['mapCanvas','structCanvas'].forEach(function(id){
+    document.getElementById(id).getContext('2d').clearRect(0,0,W,H);
+  });
+
+  /* Spinner */
+  document.getElementById('rs').style.display = 'flex';
+
+  /* Envoie init au worker */
+  worker.postMessage({ type:'init', seed:seed, version:version });
+
+  history.replaceState(null,'','?seed='+encodeURIComponent(raw)+'&v='+version);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TILE QUEUE
+═══════════════════════════════════════════════════════════ */
+function requestTile(key, tx, tz, tb) {
+  tileQueue.push({ key:key, tx:tx, tz:tz, tb:tb });
+  pumpQueue();
+}
+
+function pumpQueue() {
+  while (tilesInFlight < MAX_INFLIGHT && tileQueue.length > 0) {
+    var req = tileQueue.shift();
+    /* Vérifie qu'on n'a pas déjà la tuile (arrivée entre-temps) */
+    if (tileCache.has(req.key)) continue;
+    var id = nextTileId++;
+    pendingTiles.set(id, req);
+    tilesInFlight++;
+    worker.postMessage({
+      type: 'tile',
+      id:   id,
+      tileX: req.tx,
+      tileZ: req.tz,
+      tileSz: req.tb,
+      px: TILE
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CANVAS
+═══════════════════════════════════════════════════════════ */
+function resizeC() {
+  var wrap = document.getElementById('map-wrap');
+  var W = wrap.clientWidth, H = wrap.clientHeight;
+  ['mapCanvas','structCanvas'].forEach(function(id){
+    var c = document.getElementById(id);
+    c.width = W; c.height = H;
+  });
+}
+function cW(){ return document.getElementById('mapCanvas').width; }
+function cH(){ return document.getElementById('mapCanvas').height; }
+
+/* ═══════════════════════════════════════════════════════════
+   RENDU
+═══════════════════════════════════════════════════════════ */
+function w2s(wx,wz){ return {x:(wx-camX)/zoom+cW()/2, y:(wz-camZ)/zoom+cH()/2}; }
+function s2w(sx,sy){ return {x:(sx-cW()/2)*zoom+camX, z:(sy-cH()/2)*zoom+camZ}; }
+
+function resetView(){ camX=0; camZ=0; setZoom(4); }
+
+function setZoom(z){
+  zoom = Math.max(0.25, Math.min(128, z));
+  var lbl = zoom>=1 ? '1/'+Math.round(zoom)+'\xd7' : +(1/zoom).toFixed(1)+'\xd7';
+  document.getElementById('zoomLabel').textContent = lbl;
+  tileCache.clear();
+  tileQueue = [];
+  sched();
+}
+
+function sched(){ if(raf) return; raf=requestAnimationFrame(render); }
+
+function render() {
+  raf = null;
+  var W = cW(), H = cH();
+  var ctx = document.getElementById('mapCanvas').getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  if (!workerReady) return;
+
+  /* Blocs par tuile — puissance de 2 */
+  var tb = Math.max(1, Math.pow(2, Math.round(Math.log2(zoom * TILE))));
+
+  var tl = s2w(0,0), br = s2w(W,H);
+  var txS = Math.floor(tl.x/tb), txE = Math.ceil(br.x/tb);
+  var tzS = Math.floor(tl.z/tb), tzE = Math.ceil(br.z/tb);
+
+  ctx.imageSmoothingEnabled = false;
+  var hasPending = false;
+
+  for (var tz=tzS; tz<=tzE; tz++) {
+    for (var tx=txS; tx<=txE; tx++) {
+      var key = tx+'|'+tz+'|'+tb;
+      var rgba = tileCache.get(key);
+
+      if (!rgba) {
+        /* Demande la tuile si pas déjà en vol */
+        var alreadyQueued = false;
+        pendingTiles.forEach(function(v){ if(v.key===key) alreadyQueued=true; });
+        if (!alreadyQueued) {
+          for (var qi=0; qi<tileQueue.length; qi++) { if(tileQueue[qi].key===key){ alreadyQueued=true; break; } }
+        }
+        if (!alreadyQueued) requestTile(key, tx*tb, tz*tb, tb);
+        hasPending = true;
+        continue;
+      }
+
+      /* Dessine la tuile depuis le cache */
+      var imgData = new ImageData(rgba.slice(), TILE, TILE);
+      _octx.putImageData(imgData, 0, 0);
+      var p = w2s(tx*tb, tz*tb);
+      var sz = Math.ceil(TILE * tb / zoom);
+      ctx.drawImage(_oc, Math.round(p.x), Math.round(p.y), sz, sz);
+    }
+  }
+
+  if (showGrid) drawGrid(ctx, W, H);
+  drawS();
+
+  var rs = document.getElementById('rs');
+  if (hasPending || tilesInFlight > 0) {
+    rs.style.display = 'flex';
+    raf = requestAnimationFrame(render);
+  } else {
+    rs.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GRILLE
+═══════════════════════════════════════════════════════════ */
+function drawGrid(ctx, W, H) {
+  ctx.save();
+  var cpx = 16/zoom;
+  if (cpx > 5) {
+    ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.lineWidth=.5;
+    var tl=s2w(0,0), sx0=Math.floor(tl.x/16)*16, sz0=Math.floor(tl.z/16)*16;
+    for (var cx=sx0; cx<tl.x+W*zoom; cx+=16){ var p=w2s(cx,0); ctx.beginPath(); ctx.moveTo(p.x,0); ctx.lineTo(p.x,H); ctx.stroke(); }
+    for (var cz=sz0; cz<tl.z+H*zoom; cz+=16){ var p=w2s(0,cz); ctx.beginPath(); ctx.moveTo(0,p.y); ctx.lineTo(W,p.y); ctx.stroke(); }
+  }
+  ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=1;
+  var tl2=s2w(0,0), rx0=Math.floor(tl2.x/512)*512, rz0=Math.floor(tl2.z/512)*512;
+  for (var rx=rx0; rx<tl2.x+W*zoom; rx+=512){ var p=w2s(rx,0); ctx.beginPath(); ctx.moveTo(p.x,0); ctx.lineTo(p.x,H); ctx.stroke(); ctx.fillStyle='rgba(255,255,255,.15)'; ctx.font='9px Nunito'; ctx.fillText('R'+(rx/512|0)+','+(0),p.x+3,12); }
+  for (var rz=rz0; rz<tl2.z+H*zoom; rz+=512){ var p=w2s(0,rz); ctx.beginPath(); ctx.moveTo(0,p.y); ctx.lineTo(W,p.y); ctx.stroke(); }
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STRUCTURES
+═══════════════════════════════════════════════════════════ */
+function buildStructBar() {
+  var configs = [];
+  for (var id in structData) { configs.push(structData[id].cfg); }
+  structConfigs = configs;
+  visStructs = new Set(configs.map(function(c){ return c.id; }));
+
+  document.getElementById('struct-bar').innerHTML = configs.map(function(c){
+    return '<button class="struct-toggle on" id="st-'+c.id+'" onclick="toggleStruct('+c.id+',this)">'
+      + '<div class="dot" style="background:'+c.color+'"></div>'+c.name+'</button>';
+  }).join('');
+  document.getElementById('struct-bar').style.display = configs.length ? 'flex' : 'none';
+}
+
+function toggleStruct(id, btn) {
+  if (visStructs.has(id)) visStructs.delete(id); else visStructs.add(id);
+  btn.classList.toggle('on', visStructs.has(id));
+  drawS();
+}
+
+function drawS() {
+  var canvas = document.getElementById('structCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = cW(), H = cH();
+  ctx.clearRect(0,0,W,H);
+  if (!Object.keys(structData).length) return;
+
+  for (var id in structData) {
+    var entry = structData[id];
+    if (!visStructs.has(entry.cfg.id)) continue;
+    for (var i=0; i<entry.positions.length; i++) {
+      var pos = entry.positions[i];
+      var p = w2s(pos.x, pos.z);
+      var sx=p.x, sy=p.y;
+      if (sx<-20||sx>W+20||sy<-20||sy>H+20) continue;
+      var r = Math.max(5, Math.min(14, 9/Math.max(.1, zoom*.08)));
+      ctx.beginPath(); ctx.arc(sx,sy,r+2,0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2); ctx.fillStyle=entry.cfg.color+'22'; ctx.fill();
+      ctx.strokeStyle=entry.cfg.color; ctx.lineWidth=1.5; ctx.stroke();
+      if (r>=6) { ctx.font=Math.min(12,r*1.2)+'px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=entry.cfg.color; ctx.fillText(entry.cfg.icon,sx,sy); }
+      if (zoom<8) { ctx.fillStyle='rgba(255,255,255,.65)'; ctx.font='8px Nunito'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(pos.x+','+pos.z,sx,sy+r+2); }
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ÉVÈNEMENTS
+═══════════════════════════════════════════════════════════ */
+function onMD(e){ if(e.button!==0)return; dragging=true; lastMX=e.clientX; lastMY=e.clientY; }
+
+function onMM(e) {
+  var rect = document.getElementById('map-wrap').getBoundingClientRect();
+  var mx = e.clientX-rect.left, my = e.clientY-rect.top;
+  if (dragging) {
+    camX -= (e.clientX-lastMX)*zoom; camZ -= (e.clientY-lastMY)*zoom;
+    lastMX = e.clientX; lastMY = e.clientY;
+    sched(); hideTT(); return;
+  }
+  var w = s2w(mx,my);
+  document.getElementById('coords-display').textContent = 'X: '+Math.round(w.x)+'  Z: '+Math.round(w.z);
+  /* Biome sous curseur — lookup depuis le cache de la tuile courante */
+  var bname = getBiomeAtScreen(mx, my);
+  document.getElementById('biome-display').textContent = bname;
+
+  /* Tooltip structures */
+  for (var id in structData) {
+    var entry = structData[id];
+    if (!visStructs.has(entry.cfg.id)) continue;
+    for (var i=0; i<entry.positions.length; i++) {
+      var pos = entry.positions[i];
+      var p = w2s(pos.x, pos.z);
+      if (Math.hypot(mx-p.x, my-p.y) < 14) { showTT(entry.cfg.name, pos.x, pos.z, e.clientX, e.clientY, rect); return; }
+    }
+  }
+  hideTT();
+}
+
+function getBiomeAtScreen(mx, my) {
+  /* Trouve la tuile sous (mx,my) et lit la couleur */
+  var wx = s2w(mx,my).x, wz = s2w(mx,my).z;
+  var tb = Math.max(1, Math.pow(2, Math.round(Math.log2(zoom * TILE))));
+  var tx = Math.floor(wx/tb), tz = Math.floor(wz/tb);
+  var key = tx+'|'+tz+'|'+tb;
+  var rgba = tileCache.get(key);
+  if (!rgba) return '—';
+  /* Position dans la tuile */
+  var lx = Math.floor((wx - tx*tb) / tb * TILE);
+  var lz = Math.floor((wz - tz*tb) / tb * TILE);
+  var idx = (lz*TILE + lx)*4;
+  var r=rgba[idx], g=rgba[idx+1], b=rgba[idx+2];
+  /* Retrouve le biome par couleur (approximatif) */
+  return rgbToBiomeName(r,g,b);
+}
+
+/* Cache inverse couleur → nom */
+var _colorToBiome = null;
+function rgbToBiomeName(r,g,b) {
+  /* Comparaison rapide */
+  var best = '—', bestD = 999999;
+  for (var id in BIOME_FR) {
+    var arr = workerBiomeColor(+id);
+    if (!arr) continue;
+    var d = (r-arr[0])*(r-arr[0])+(g-arr[1])*(g-arr[1])+(b-arr[2])*(b-arr[2]);
+    if (d < bestD) { bestD=d; best=BIOME_FR[id]; }
+  }
+  return best;
+}
+
+/* Les couleurs du worker (copiées ici pour la barre du bas) */
+var WC = {
+  0:[0,0,112],1:[141,179,96],2:[250,148,24],3:[96,96,96],4:[5,102,33],
+  5:[11,102,89],6:[7,249,178],7:[0,0,255],10:[144,144,160],11:[160,160,255],
+  12:[255,255,255],14:[255,0,255],16:[250,222,85],21:[83,123,9],23:[99,166,47],
+  24:[0,0,48],25:[162,162,132],27:[48,116,68],29:[64,81,26],30:[49,85,74],
+  32:[89,102,81],35:[189,178,95],36:[167,157,100],37:[217,69,21],38:[255,109,61],
+  39:[176,151,101],61:[180,220,220],85:[93,68,32],86:[221,8,8],87:[73,144,123],
+  88:[84,84,94],177:[83,179,96],178:[200,220,255],179:[205,210,220],
+  180:[160,180,200],181:[200,200,200],182:[210,200,170],183:[255,183,197],
+  184:[15,15,25],185:[45,120,60],
+};
+function workerBiomeColor(id){ return WC[id]||null; }
+
+function showTT(name,x,z,cx,cy,rect) {
+  var tt=document.getElementById('tooltip');
+  document.getElementById('ttName').textContent=name;
+  document.getElementById('ttCoord').textContent='X: '+x+'  Z: '+z;
+  tt.style.display='block';
+  var l=cx-rect.left+14, t=cy-rect.top+14;
+  if(l+170>rect.width) l=cx-rect.left-170;
+  if(t+50>rect.height) t=cy-rect.top-50;
+  tt.style.left=l+'px'; tt.style.top=t+'px';
+}
+function hideTT(){ document.getElementById('tooltip').style.display='none'; }
+
+function onWh(e) {
+  e.preventDefault();
+  var f = e.deltaY>0 ? 1.18 : 1/1.18;
+  var rect = document.getElementById('map-wrap').getBoundingClientRect();
+  var mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  var ww = s2w(mx,my);
+  zoom = Math.max(0.25, Math.min(128, zoom*f));
+  document.getElementById('zoomLabel').textContent = zoom>=1?'1/'+Math.round(zoom)+'\xd7':+(1/zoom).toFixed(1)+'\xd7';
+  camX = ww.x-(mx-cW()/2)*zoom;
+  camZ = ww.z-(my-cH()/2)*zoom;
+  tileCache.clear(); tileQueue=[];
+  sched();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UI
+═══════════════════════════════════════════════════════════ */
+function toggleGrid(){ showGrid=!showGrid; document.getElementById('btnGrid').classList.toggle('active',showGrid); sched(); }
+
+function toggleLegend(){
+  var el=document.getElementById('biome-legend');
+  el.classList.toggle('visible');
+  document.getElementById('btnLegend').classList.toggle('active',el.classList.contains('visible'));
+  if (el.classList.contains('visible') && !el.dataset.built) {
+    el.dataset.built='1';
+    var html='';
+    for (var id in BIOME_FR) {
+      var c=WC[id]||[100,100,100];
+      html+='<div class="bl-item"><div class="bl-swatch" style="background:rgb('+c[0]+','+c[1]+','+c[2]+')"></div><div class="bl-name">'+BIOME_FR[id]+'</div></div>';
+    }
+    document.getElementById('legendItems').innerHTML = html;
+  }
+}
+
+function gotoCoords(){
+  camX=parseFloat(document.getElementById('gotoX').value)||0;
+  camZ=parseFloat(document.getElementById('gotoZ').value)||0;
+  tileCache.clear(); tileQueue=[];
+  sched();
+}
+function shareLink(){ navigator.clipboard.writeText(location.href).then(function(){ MineGuide.showToast('Lien copié !','success'); }); }
+function adjustZoom(f){ setZoom(zoom*f); }
+
+init();
+</script>
+</body>
+</html>
