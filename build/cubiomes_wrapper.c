@@ -19,12 +19,12 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 #include "cubiomes/generator.h"
 #include "cubiomes/finders.h"
 #include "cubiomes/util.h"
+#include "cubiomes/structures.h" // <- nécessaire pour enum StructureType et STRUCTURE_*
 
-/* ─── Mapping version → constante cubiomes ─── */
+/* ─── Mapping version string → constante cubiomes ─── */
 static int version_const(int v) {
     if (v >= 1214) return MC_1_21;
     if (v >= 1210) return MC_1_21;
@@ -38,7 +38,7 @@ static int version_const(int v) {
 /* ─── Opaque handle ─── */
 typedef struct {
     Generator g;
-    int mc_version;
+    int       mc_version;
 } CWGen;
 
 CWGen* cw_init(int version_int, int large_biomes) {
@@ -49,7 +49,9 @@ CWGen* cw_init(int version_int, int large_biomes) {
     return cw;
 }
 
-void cw_free(CWGen *cw) { if(cw) free(cw); }
+void cw_free(CWGen *cw) {
+    if (cw) free(cw);
+}
 
 void cw_set_seed(CWGen *cw, int seed_lo, int seed_hi) {
     if (!cw) return;
@@ -78,20 +80,20 @@ void cw_get_biome_bulk(CWGen *cw, int *out, int ox, int oz, int w, int h, int sc
 /* ─── STRUCTURES ─── */
 static enum StructureType struct_type(int t) {
     switch(t) {
-        case 0:  return Village;
-        case 1:  return Fortress;
-        case 2:  return BastionRemnant;
-        case 3:  return Monument;
-        case 4:  return Mansion;
-        case 5:  return Desert_Pyramid;
-        case 6:  return Jungle_Pyramid;
-        case 7:  return Swamp_Hut;
-        case 8:  return Stronghold;
-        case 9:  return Mineshaft;
-        case 10: return Ruined_Portal;
-        case 11: return Outpost;
-        case 12: return Ancient_City;
-        default: return Village;
+        case 0:  return STRUCTURE_VILLAGE;
+        case 1:  return STRUCTURE_FORTRESS;
+        case 2:  return STRUCTURE_BASTION_REMNANT;
+        case 3:  return STRUCTURE_MONUMENT;
+        case 4:  return STRUCTURE_MANSION;
+        case 5:  return STRUCTURE_DESERT_PYRAMID;
+        case 6:  return STRUCTURE_JUNGLE_PYRAMID;
+        case 7:  return STRUCTURE_SWAMP_HUT;
+        case 8:  return STRUCTURE_STRONGHOLD;
+        case 9:  return STRUCTURE_MINESHAFT;
+        case 10: return STRUCTURE_RUINED_PORTAL;
+        case 11: return STRUCTURE_OUTPOST;
+        case 12: return STRUCTURE_ANCIENT_CITY;
+        default: return STRUCTURE_VILLAGE;
     }
 }
 
