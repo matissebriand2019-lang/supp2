@@ -1,59 +1,50 @@
-name: Build cubiomes WASM
+name: Compile cubiomes → WASM
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # 1️⃣ Checkout du repo principal
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      # 2️⃣ Cloner cubiomes officiel
-      - name: Clone cubiomes
-        run: git clone --depth=1 https://github.com/Cubitect/cubiomes.git
+      - name: Clone cubiomes dans build/
+        run: git clone --depth=1 https://github.com/Cubitect/cubiomes build/cubiomes
 
-      # 3️⃣ Installer Emscripten
+      - name: Vérifier les sources cubiomes
+        run: |
+          echo "=== Sources cubiomes ==="
+          ls build/cubiomes/*.c
+          echo "=== Wrapper ==="
+          ls build/cubiomes_wrapper.c
+
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: 3.1.56
 
-      # 4️⃣ Compiler en WebAssembly avec emcc
-      - name: Compile cubiomes → WASM
-        run: |
-          cd cubiomes
-          emcc -O3 \
-            biomenoise.c \
-            biomes.c \
-            finders.c \
-            generator.c \
-            layers.c \
-            noise.c \
-            quadbase.c \
-            util.c \
-            -s WASM=1 \
-            -s MODULARIZE=1 \
-            -s EXPORT_NAME="CubiomesModule" \
-            -s ENVIRONMENT=web \
-            -o cubiomes.js
+      - name: Vérifier emcc
+        run: emcc --version
 
-      # 5️⃣ Vérification (debug visuel dans logs)
-      - name: List generated files
+      - name: Compiler cubiomes → WASM
         run: |
-          cd cubiomes
-          ls -lah
+          cd build
+          bash build.sh
 
-      # 6️⃣ Upload uniquement les fichiers utiles
-      - name: Upload WASM artefacts
+      - name: Vérifier les fichiers générés
+        run: |
+          ls -lh assets/js/cubiomes.js assets/js/cubiomes.wasm
+          echo "Taille WASM :"
+          wc -c assets/js/cubiomes.wasm
+
+      - name: Upload artefact
         uses: actions/upload-artifact@v4
         with:
           name: cubiomes-wasm
           path: |
-            cubiomes/cubiomes.js
-            cubiomes/cubiomes.wasm
+            assets/js/cubiomes.js
+            assets/js/cubiomes.wasm
