@@ -1,20 +1,4 @@
 #!/bin/bash
-# ============================================================
-# build.sh — Compile cubiomes → WASM
-# ============================================================
-# PRÉREQUIS :
-#   1. Emscripten installé :
-#        git clone https://github.com/emscripten-core/emsdk.git
-#        cd emsdk && ./emsdk install latest && ./emsdk activate latest
-#        source ./emsdk_env.sh
-#
-#   2. cubiomes cloné DANS ce dossier build/ :
-#        git clone https://github.com/Cubitect/cubiomes cubiomes
-#
-# PUIS lancer ce script depuis le dossier build/ :
-#        cd build && bash build.sh
-# ============================================================
-
 set -e
 
 echo "=== MineGuide — Compilation cubiomes → WASM ==="
@@ -28,7 +12,6 @@ fi
 
 # Vérifie cubiomes
 if [ ! -d "cubiomes" ]; then
-  echo "Clone cubiomes..."
   git clone --depth=1 https://github.com/Cubitect/cubiomes cubiomes
 fi
 
@@ -66,5 +49,3 @@ echo "✅ Compilation réussie !"
 echo "   Fichiers générés :"
 echo "     ../assets/js/cubiomes.js"
 echo "     ../assets/js/cubiomes.wasm"
-echo ""
-echo "Déplace-les si besoin, puis ouvre seedmap.html dans le navigateur."
