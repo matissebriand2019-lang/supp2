@@ -2,7 +2,7 @@ name: Build cubiomes WASM
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Récupérer ton repo
-      - name: Checkout main repo
+      # 1️⃣ Checkout du repo principal
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 2️⃣ Cloner cubiomes
+      # 2️⃣ Cloner cubiomes officiel
       - name: Clone cubiomes
         run: git clone --depth=1 https://github.com/Cubitect/cubiomes.git
 
@@ -24,18 +24,36 @@ jobs:
         with:
           version: 3.1.56
 
-      # 4️⃣ Compiler en WASM
-      - name: Build cubiomes (WASM)
+      # 4️⃣ Compiler en WebAssembly avec emcc
+      - name: Compile cubiomes → WASM
         run: |
           cd cubiomes
-          mkdir build
-          cd build
-          emcmake cmake ..
-          emmake make
+          emcc -O3 \
+            biomenoise.c \
+            biomes.c \
+            finders.c \
+            generator.c \
+            layers.c \
+            noise.c \
+            quadbase.c \
+            util.c \
+            -s WASM=1 \
+            -s MODULARIZE=1 \
+            -s EXPORT_NAME="CubiomesModule" \
+            -s ENVIRONMENT=web \
+            -o cubiomes.js
 
-      # 5️⃣ Upload artefacts
+      # 5️⃣ Vérification (debug visuel dans logs)
+      - name: List generated files
+        run: |
+          cd cubiomes
+          ls -lah
+
+      # 6️⃣ Upload uniquement les fichiers utiles
       - name: Upload WASM artefacts
         uses: actions/upload-artifact@v4
         with:
           name: cubiomes-wasm
-          path: cubiomes/build/
+          path: |
+            cubiomes/cubiomes.js
+            cubiomes/cubiomes.wasm
